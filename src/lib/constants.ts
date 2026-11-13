@@ -67,18 +67,18 @@ export type OrdenacaoValue = (typeof ORDENACAO_OPTIONS)[number]["value"];
 
 export const TESTIMONIALS = [
   {
-    name: "Marisa Alves",
-    text:
-      "Sou cliente há mais de 20 anos e sempre fui muito bem atendida. Recomendo a Isavel Veículos de olhos fechados.",
-  },
-  {
     name: "Bernardo Vasconcelos",
     text:
-      "Excelente atendimento em Divinópolis-MG. Processo transparente do início ao fim.",
+      "Procurei a Isavel, através de um bom amigo e agora consultor para minha vida automotiva. O atendimento foi incrível, o meu pequeno interesse em trocar meu carro gerou um grande interesse da agência em me ajudar. Trouxeram um carro para eu avaliar em Divinópolis-MG, mesmo sem um acordo fechado, mostrando que a vontade de auxiliar o cliente prevalece na filosofia de trabalho da isavel. Essa forma de colocar o cliente acima de seus próprios interesses foi o que mais me chamou a atenção. Novamente…",
+  },
+  {
+    name: "Marisa Alves",
+    text:
+      "A Isavel está na minha vida e da minha família há mais de 20 anos. Sempre fomos bem atendidos e recebidos, sem falar no suporte que recebemos em cada compra, impecáveis. Sou cliente fiel e recomendo muito a Isavel.",
   },
   {
     name: "Laura",
     text:
-      "O consultor Gustavo me ajudou a encontrar o carro certo. Atendimento atencioso e rápido.",
+      "Eu tinha um grande interesse em trocar o veículo por um modelo maior, mais confortável e tinha em mente uma marca específica. Procurei a Isavel veículos, e fui surpreendida pela dedicação do Gustavo em atender meu pedido. Naquele momento a loja não dispunha do modelo que eu queria, nas condições que dariam certo para mim, mas desde então a Isavel não deixou que eu desistisse, dizendo que certamente encontrariam um carro que me atendesse. Foi o que fizeram, me enviaram uma opção de outra marca,…",
   },
 ] as const;

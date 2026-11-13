@@ -7,7 +7,7 @@ import { withBasePath } from "@/lib/base-path";
 export const metadata: Metadata = {
   title: "Financie",
   description:
-    "Solicite análise de financiamento com os bancos parceiros da Isavel Veículos. Sem simulador — atendimento personalizado.",
+    "Solicite análise de financiamento com os bancos parceiros da Isavel Veículos.",
 };
 
 const STEPS = [
@@ -21,8 +21,8 @@ export default function FinanciePage() {
     <div className="mx-auto max-w-3xl px-4 py-8">
       <h1 className="mb-2 text-2xl font-bold text-primary">Financiamento</h1>
       <p className="mb-6 text-muted-foreground">
-        Trabalhamos com as principais financeiras para oferecer as melhores condições.
-        Esta página é para <strong>solicitar análise</strong> — não há calculadora de parcelas no site.
+        Trabalhamos com as principais financeiras, isso garante melhores taxas para você!
+        Preencha o pedido de análise e a equipe retorna pelo WhatsApp.
       </p>
       <div className="mb-8 flex flex-wrap gap-3">
         {BANCOS_FINANCE.map((banco) => (

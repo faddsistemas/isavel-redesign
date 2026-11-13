@@ -79,7 +79,7 @@ export default function HomePage() {
             <CardContent className="flex flex-col gap-3 p-6">
               <h2 className="text-xl font-bold text-primary">Financiamento</h2>
               <p className="text-sm text-muted-foreground">
-                Parceria com as principais financeiras. Solicite análise sem compromisso — sem simulador, atendimento humano.
+                Trabalhamos com as principais financeiras, isso garante melhores taxas para você!
               </p>
               <Link
                 href="/financie/"
