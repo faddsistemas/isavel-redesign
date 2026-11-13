@@ -25,8 +25,17 @@ test.describe("Isavel redesign smoke", () => {
     await page.getByTestId("vehicle-card").first().click();
     const modal = page.getByTestId("vehicle-preview-modal");
     await expect(modal).toBeVisible();
+    await assertModalFitsViewport(page, modal);
     await page.keyboard.press("Escape");
     await expect(modal).not.toBeVisible();
+  });
+
+  test("modal: botões visíveis e sem overflow horizontal", async ({ page }) => {
+    await page.goto("./", { waitUntil: "networkidle" });
+    await page.getByTestId("vehicle-card").first().click();
+    const modal = page.getByTestId("vehicle-preview-modal");
+    await expect(modal).toBeVisible();
+    await assertModalFitsViewport(page, modal);
   });
 
   test("estoque filtra por termo", async ({ page }) => {
@@ -70,3 +79,36 @@ test.describe("Isavel redesign smoke", () => {
     }
   });
 });
+
+async function assertModalFitsViewport(
+  page: import("@playwright/test").Page,
+  modal: import("@playwright/test").Locator,
+) {
+  const modalMetrics = await modal.evaluate((el) => ({
+    scrollWidth: el.scrollWidth,
+    clientWidth: el.clientWidth,
+  }));
+  expect(modalMetrics.scrollWidth).toBeLessThanOrEqual(
+    modalMetrics.clientWidth + 1,
+  );
+
+  const ver = modal.getByTestId("preview-ver-anuncio");
+  const wa = modal.getByTestId("preview-whatsapp");
+  await expect(ver).toBeVisible();
+  await expect(wa).toBeVisible();
+
+  const viewport = await page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+
+  for (const btn of [ver, wa]) {
+    const box = await btn.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.width).toBeGreaterThan(0);
+    expect(box!.x).toBeGreaterThanOrEqual(-2);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 2);
+    expect(box!.y).toBeGreaterThanOrEqual(-2);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height + 2);
+  }
+}

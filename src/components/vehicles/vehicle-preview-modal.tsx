@@ -11,7 +11,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { buttonVariants } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatAno, formatKm, formatPreco } from "@/lib/format";
 import type { Veiculo } from "@/lib/types";
 import { localPhotoPaths, vehiclePathFromUrl } from "@/lib/vehicles";
@@ -45,7 +44,7 @@ export function VehiclePreviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         showCloseButton
-        className="max-h-[min(92vh,720px)] gap-0 overflow-hidden p-0 sm:max-w-lg"
+        className="box-border max-h-[min(92vh,720px)] w-full max-w-[calc(100vw-1.5rem)] min-w-0 gap-0 overflow-x-hidden overflow-y-hidden p-0 sm:max-w-lg"
         data-testid="vehicle-preview-modal"
       >
         <DialogHeader className="sr-only">
@@ -53,8 +52,8 @@ export function VehiclePreviewModal({
             Prévia — {titulo}
           </DialogTitle>
         </DialogHeader>
-        <div className="flex max-h-[min(92vh,720px)] flex-col">
-          <div className="relative aspect-[4/3] w-full shrink-0 bg-muted">
+        <div className="flex max-h-[min(92vh,720px)] min-w-0 max-w-full flex-col overflow-x-hidden">
+          <div className="relative aspect-[4/3] w-full max-w-full min-w-0 shrink-0 overflow-hidden bg-muted">
             <Image
               src={photos[photoIndex] ?? photos[0]}
               alt={`${titulo} — foto ${photoIndex + 1}`}
@@ -64,8 +63,8 @@ export function VehiclePreviewModal({
             />
           </div>
           {photos.length > 1 && (
-            <ScrollArea className="w-full border-b border-border">
-              <div className="flex gap-2 p-2">
+            <div className="w-full max-w-full min-w-0 border-b border-border">
+              <div className="flex max-w-full gap-2 overflow-x-auto overscroll-x-contain p-2 [-webkit-overflow-scrolling:touch]">
                 {photos.slice(0, 8).map((src, i) => (
                   <button
                     key={src}
@@ -87,9 +86,9 @@ export function VehiclePreviewModal({
                   </button>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           )}
-          <div className="flex flex-1 flex-col gap-3 overflow-y-auto p-4">
+          <div className="flex min-w-0 max-w-full flex-1 flex-col gap-3 overflow-x-hidden overflow-y-auto p-4">
             <div>
               <p className="text-xs font-medium uppercase text-muted-foreground">
                 {vehicle.loja.replace("Isavel Veiculos - ", "")}
@@ -102,10 +101,16 @@ export function VehiclePreviewModal({
               {formatAno(vehicle.ano_fabricacao, vehicle.ano_modelo)} ·{" "}
               {formatKm(vehicle.km)} · {vehicle.cambio} · {vehicle.combustivel}
             </p>
-            <div className="mt-auto flex flex-col gap-2 pt-2 sm:flex-row">
+            <div
+              className="mt-auto flex w-full min-w-0 max-w-full flex-col gap-2 pt-2 sm:flex-row sm:items-stretch"
+              data-testid="preview-actions"
+            >
               <Link
                 href={detailPath}
-                className={cn(buttonVariants({ variant: "default", size: "lg" }), "min-h-11 w-full")}
+                className={cn(
+                  buttonVariants({ variant: "default", size: "lg" }),
+                  "min-h-11 w-full max-w-full min-w-0 shrink whitespace-normal text-center sm:flex-1 sm:basis-0",
+                )}
                 data-testid="preview-ver-anuncio"
               >
                 Ver anúncio completo
@@ -116,10 +121,11 @@ export function VehiclePreviewModal({
                 rel="noopener noreferrer"
                 className={cn(
                   buttonVariants({ variant: "secondary", size: "lg" }),
-                  "min-h-11 w-full border border-[#128C4A] bg-[#e8f8ee] text-[#128C4A] hover:bg-[#d4f0df]",
+                  "min-h-11 w-full max-w-full min-w-0 shrink whitespace-normal text-center sm:flex-1 sm:basis-0 border border-[#128C4A] bg-[#e8f8ee] text-[#128C4A] hover:bg-[#d4f0df]",
                 )}
+                data-testid="preview-whatsapp"
               >
-                <MessageCircle data-icon="inline-start" className="size-4" />
+                <MessageCircle data-icon="inline-start" className="size-4 shrink-0" />
                 Chamar no WhatsApp
               </Link>
             </div>
