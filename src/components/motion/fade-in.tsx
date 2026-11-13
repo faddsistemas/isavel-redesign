@@ -9,7 +9,9 @@ interface FadeInProps {
   delay?: number;
 }
 
-/** Animação de entrada (estilo React Bits / FadeContent) com framer-motion e prefers-reduced-motion. */
+/**
+ * Conteúdo sempre visível (opacity 1). Animação opcional só de translateY leve.
+ */
 export function FadeIn({ children, className, delay = 0 }: FadeInProps) {
   const reduce = useReducedMotion();
   if (reduce) {
@@ -18,10 +20,11 @@ export function FadeIn({ children, className, delay = 0 }: FadeInProps) {
   return (
     <motion.div
       className={className}
-      initial={{ opacity: 0, y: 12 }}
+      data-fade-in=""
+      initial={{ opacity: 1, y: 0 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.45, delay, ease: [0.22, 1, 0.36, 1] }}
+      viewport={{ once: true, amount: 0.05 }}
+      transition={{ duration: 0.35, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.div>

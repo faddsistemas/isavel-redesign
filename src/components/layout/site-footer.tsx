@@ -82,9 +82,11 @@ function StoreBlock({
         <iframe
           title={`Mapa — ${store.short}`}
           src={store.mapEmbed}
-          className="h-48 w-full border-0"
-          loading="lazy"
+          className="h-48 w-full border-0 bg-white/10"
+          loading="eager"
           referrerPolicy="no-referrer-when-downgrade"
+          allowFullScreen
+          data-testid={`map-embed-${store.short.toLowerCase().replace(/\s+/g, "-")}`}
         />
       </div>
       <a

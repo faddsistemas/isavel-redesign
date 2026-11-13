@@ -11,6 +11,58 @@ test.describe("Isavel redesign smoke", () => {
     await assertPlusJakartaFont(page);
   });
 
+  test("home: após scroll, seções visíveis e mapas com src válido", async ({
+    page,
+  }) => {
+    await page.goto("./", { waitUntil: "networkidle" });
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    await page.waitForTimeout(800);
+
+    const headings = [
+      "Marcas no estoque",
+      "Destaques",
+      "Venda seu carro",
+      "Financiamento",
+      "O que dizem nossos clientes",
+    ];
+    for (const name of headings) {
+      const h = page.getByRole("heading", { name, exact: true });
+      await expect(h).toBeVisible();
+      const visible = await h.evaluate((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.height === 0 || rect.width === 0) return false;
+        let node: HTMLElement | null = el as HTMLElement;
+        while (node) {
+          const opacity = Number.parseFloat(getComputedStyle(node).opacity);
+          if (opacity < 0.99) return false;
+          node = node.parentElement;
+        }
+        return true;
+      });
+      expect(visible).toBe(true);
+    }
+
+    const fadeBlocks = page.locator("[data-fade-in]");
+    const fadeCount = await fadeBlocks.count();
+    expect(fadeCount).toBeGreaterThan(0);
+    for (let i = 0; i < fadeCount; i++) {
+      const opacity = await fadeBlocks.nth(i).evaluate((el) =>
+        Number.parseFloat(getComputedStyle(el).opacity),
+      );
+      expect(opacity).toBeGreaterThanOrEqual(0.99);
+    }
+
+    const maps = page.locator('footer iframe[title^="Mapa"]');
+    await expect(maps).toHaveCount(2);
+    for (let i = 0; i < 2; i++) {
+      const src = await maps.nth(i).getAttribute("src");
+      expect(src).toMatch(/google\.com\/maps/);
+      expect(src).toContain("output=embed");
+    }
+  });
+
   test("home carrega sem overflow e sem erros no console", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => {

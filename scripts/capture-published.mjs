@@ -19,7 +19,14 @@ const contexts = [
 for (const vp of contexts) {
   const page = await browser.newPage({ viewport: { width: vp.width, height: vp.height } });
   await page.goto(base, { waitUntil: "networkidle", timeout: 60_000 });
-  await page.screenshot({ path: path.join(artifactDir, `published-home-${vp.name}.png`), fullPage: true });
+  await page.evaluate(() =>
+    window.scrollTo(0, document.documentElement.scrollHeight),
+  );
+  await page.waitForTimeout(1200);
+  await page.screenshot({
+    path: path.join(artifactDir, `published-home-${vp.name}.png`),
+    fullPage: true,
+  });
   await page.getByTestId("vehicle-card").first().click({ timeout: 30_000 });
   await page.waitForTimeout(600);
   await page.screenshot({
