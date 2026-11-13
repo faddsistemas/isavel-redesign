@@ -1,0 +1,15 @@
+---
+description: Escopo do produto Isavel Redesign — não inventar funcionalidades
+alwaysApply: true
+---
+
+# Isavel — escopo de produto
+
+- Manter identidade: logo, `#002969`, `#212121`, Plus Jakarta Sans, contatos reais (WhatsApp (37) 98802-8801).
+- Só páginas que existem no site atual: home, estoque, anúncio, venda-seu-carro, financie (lead apenas), sobre, termos, privacidade.
+- **Proibido:** simulador de parcela, nota Google, blog, login/favoritos, test-drive, chat próprio, checkout.
+- Estoque e marcas vêm de `data/vehicles.json` — não exibir Hilux/veículos ou marcas (ex.: BYD) sem unidades no JSON.
+- Formulários: abrir WhatsApp com mensagem preenchida; sem backend.
+- Financie é solicitação de análise, nunca calculadora de parcela.
+
+Veja também `PRODUCT.md`.
