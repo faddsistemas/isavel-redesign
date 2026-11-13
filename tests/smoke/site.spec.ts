@@ -4,6 +4,13 @@ const sampleDetail =
   "carros/jeep/renegade-s-t270-1-3-tb-4x4-flex-aut/2023/1174974/";
 
 test.describe("Isavel redesign smoke", () => {
+  test("Plus Jakarta Sans carrega (woff2 200 e font-family no body)", async ({
+    page,
+  }) => {
+    await page.goto("./", { waitUntil: "networkidle" });
+    await assertPlusJakartaFont(page);
+  });
+
   test("home carrega sem overflow e sem erros no console", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => {
@@ -79,6 +86,46 @@ test.describe("Isavel redesign smoke", () => {
     }
   });
 });
+
+async function assertPlusJakartaFont(page: import("@playwright/test").Page) {
+  await page.waitForFunction(
+    () => {
+      const ff = getComputedStyle(document.body).fontFamily.toLowerCase();
+      return ff.includes("plus jakarta");
+    },
+    { timeout: 10_000 },
+  );
+  const fontFamily = await page.evaluate(
+    () => getComputedStyle(document.body).fontFamily,
+  );
+  expect(fontFamily.toLowerCase()).toContain("plus jakarta sans");
+
+  const woff2Href = await page.evaluate(() => {
+    const preload = document.querySelector('link[rel="preload"][as="font"]');
+    if (preload?.getAttribute("href")?.includes(".woff2")) {
+      return preload.getAttribute("href");
+    }
+    for (const sheet of [...document.styleSheets]) {
+      try {
+        for (const rule of [...sheet.cssRules]) {
+          if (rule instanceof CSSFontFaceRule) {
+            const src = rule.style.getPropertyValue("src");
+            const match = src.match(/url\(["']?([^"')]+\.woff2)/);
+            if (match?.[1]) return match[1];
+          }
+        }
+      } catch {
+        /* cross-origin sheet */
+      }
+    }
+    return null;
+  });
+  expect(woff2Href).toBeTruthy();
+  const fontUrl = new URL(woff2Href!, page.url()).toString();
+  const response = await page.request.get(fontUrl);
+  expect(response.status()).toBe(200);
+  expect(response.headers()["content-type"] ?? "").toMatch(/font|octet-stream/i);
+}
 
 async function assertModalFitsViewport(
   page: import("@playwright/test").Page,

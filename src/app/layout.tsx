@@ -9,7 +9,7 @@ import { Providers } from "@/components/providers";
 const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
-  variable: "--font-sans",
+  variable: "--font-plus-jakarta",
   display: "swap",
 });
 
@@ -37,9 +37,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className={plusJakarta.variable}>
       <body
-        className={`${plusJakarta.variable} flex min-h-screen flex-col antialiased`}
+        className={`${plusJakarta.className} flex min-h-screen flex-col font-sans antialiased`}
       >
         <Providers>
           <SiteHeader />
