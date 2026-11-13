@@ -78,15 +78,62 @@ test.describe("Isavel redesign smoke", () => {
     expect(errors.filter((e) => !e.includes("favicon"))).toEqual([]);
   });
 
+  test("carrossel: setas e bolinhas não abrem o modal", async ({ page }) => {
+    await page.goto("./", { waitUntil: "networkidle" });
+    const modal = page.getByTestId("vehicle-preview-modal");
+    const carousel = page.getByTestId("hero-carousel");
+    const initial = await carousel.getAttribute("data-active-index");
+
+    await page.getByTestId("hero-carousel-next").click();
+    await expect(modal).not.toBeVisible();
+    await expect(carousel).not.toHaveAttribute("data-active-index", initial ?? "0");
+
+    await page.getByTestId("hero-carousel-dot-2").click();
+    await expect(modal).not.toBeVisible();
+    await expect(carousel).toHaveAttribute("data-active-index", "2");
+
+    await page.getByTestId("hero-carousel-dot-0").click();
+    await page.getByTestId("hero-slide-open").first().click();
+    await expect(modal).toBeVisible();
+    await page.keyboard.press("Escape");
+  });
+
   test("carrossel e modal abrem e fecham", async ({ page }) => {
     await page.goto("./", { waitUntil: "networkidle" });
-    await page.getByTestId("hero-carousel").getByRole("button", { name: /Próximo/i }).click();
+    await page.getByTestId("hero-carousel-next").click();
     await page.getByTestId("vehicle-card").first().click();
     const modal = page.getByTestId("vehicle-preview-modal");
     await expect(modal).toBeVisible();
     await assertModalFitsViewport(page, modal);
     await page.keyboard.press("Escape");
     await expect(modal).not.toBeVisible();
+  });
+
+  test("modal desktop: CTAs visíveis sem scroll interno", async ({
+    page,
+  }, testInfo) => {
+    test.skip(
+      !testInfo.project.name.startsWith("desktop"),
+      "somente viewports desktop",
+    );
+    await page.goto("./", { waitUntil: "networkidle" });
+    await page.getByTestId("vehicle-card").first().click();
+    const modal = page.getByTestId("vehicle-preview-modal");
+    await expect(modal).toBeVisible();
+
+    const scrollInfo = await modal.evaluate((el) => ({
+      scrollHeight: el.scrollHeight,
+      clientHeight: el.clientHeight,
+    }));
+    expect(scrollInfo.scrollHeight).toBeLessThanOrEqual(
+      scrollInfo.clientHeight + 2,
+    );
+
+    await assertModalFitsViewport(page, modal);
+    const ver = modal.getByTestId("preview-ver-anuncio").first();
+    const wa = modal.getByTestId("preview-whatsapp").first();
+    await assertElementInViewport(page, ver);
+    await assertElementInViewport(page, wa);
   });
 
   test("modal: botões visíveis e sem overflow horizontal", async ({ page }) => {
@@ -179,6 +226,21 @@ async function assertPlusJakartaFont(page: import("@playwright/test").Page) {
   expect(response.headers()["content-type"] ?? "").toMatch(/font|octet-stream/i);
 }
 
+async function assertElementInViewport(
+  page: import("@playwright/test").Page,
+  locator: import("@playwright/test").Locator,
+) {
+  const box = await locator.boundingBox();
+  expect(box).not.toBeNull();
+  const viewport = await page.evaluate(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  }));
+  expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width + 2);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height + 2);
+  expect(box!.y).toBeGreaterThanOrEqual(-2);
+}
+
 async function assertModalFitsViewport(
   page: import("@playwright/test").Page,
   modal: import("@playwright/test").Locator,
@@ -191,8 +253,8 @@ async function assertModalFitsViewport(
     modalMetrics.clientWidth + 1,
   );
 
-  const ver = modal.getByTestId("preview-ver-anuncio");
-  const wa = modal.getByTestId("preview-whatsapp");
+  const ver = modal.getByTestId("preview-ver-anuncio").first();
+  const wa = modal.getByTestId("preview-whatsapp").first();
   await expect(ver).toBeVisible();
   await expect(wa).toBeVisible();
 
