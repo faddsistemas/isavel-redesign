@@ -185,23 +185,23 @@
   transform-origin: center center;
 }
 
-@keyframes hero-ken-burns-subtle {
+@keyframes hero-ken-burns-cover {
   from {
     transform: scale(1);
   }
   to {
-    transform: scale(1.03);
+    transform: scale(1.04);
   }
 }
 
-.hero-ken-burns-subtle {
-  animation: hero-ken-burns-subtle 10s ease-out forwards;
+.hero-ken-burns-cover {
+  animation: hero-ken-burns-cover 9s ease-out forwards;
   transform-origin: center center;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hero-ken-burns-contain,
-  .hero-ken-burns-subtle {
+  .hero-ken-burns-cover {
     animation: none;
     transform: scale(1);
   }

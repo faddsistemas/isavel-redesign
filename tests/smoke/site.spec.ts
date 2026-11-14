@@ -121,6 +121,66 @@ test.describe("Isavel redesign smoke", () => {
     expect(errors.filter((e) => !e.includes("favicon"))).toEqual([]);
   });
 
+  test("hero: full-bleed object-cover em todos os slides", async ({ page }) => {
+    await page.goto("./", { waitUntil: "networkidle" });
+    const carousel = page.getByTestId("hero-carousel");
+    await expect(carousel).toBeVisible();
+    await page.getByTestId("hero-carousel-pause").click();
+    const slideCount = await page.getByTestId(/^hero-carousel-dot-/).count();
+
+    for (let i = 0; i < slideCount; i++) {
+      if (i > 0) {
+        await page.getByTestId(`hero-carousel-dot-${i}`).click();
+        await expect(carousel).toHaveAttribute("data-active-index", String(i), {
+          timeout: 5_000,
+        });
+        await page.waitForTimeout(1_300);
+      }
+
+      const metrics = await page.evaluate((index) => {
+        const section = document.querySelector(
+          '[data-testid="hero-carousel"]',
+        ) as HTMLElement | null;
+        if (!section || section.getAttribute("data-active-index") !== String(index)) {
+          return null;
+        }
+        const mediaEl = section.querySelector(
+          '[data-testid="hero-slide-media"]',
+        ) as HTMLElement | null;
+        const imgEl = section.querySelector(
+          '[data-testid="hero-slide-image"]',
+        ) as HTMLImageElement | null;
+        if (!mediaEl || !imgEl) return null;
+
+        const s = section.getBoundingClientRect();
+        const m = mediaEl.getBoundingClientRect();
+        const imgFit = getComputedStyle(imgEl).objectFit;
+        let opacity = 1;
+        let node: HTMLElement | null = mediaEl;
+        while (node && node !== section) {
+          opacity *= Number.parseFloat(getComputedStyle(node).opacity);
+          node = node.parentElement;
+        }
+        const hasBlurPanel = Boolean(
+          section.querySelector('[data-testid="hero-foreground-box"]'),
+        );
+        return {
+          sectionW: s.width,
+          mediaW: m.width,
+          imgFit,
+          hasBlurPanel,
+          opacity,
+        };
+      }, i);
+
+      expect(metrics).not.toBeNull();
+      expect(metrics!.hasBlurPanel).toBe(false);
+      expect(metrics!.imgFit).toBe("cover");
+      expect(metrics!.opacity).toBeGreaterThanOrEqual(0.99);
+      expect(metrics!.mediaW).toBeGreaterThanOrEqual(metrics!.sectionW * 0.98);
+    }
+  });
+
   test("carrossel: setas e bolinhas não abrem o modal", async ({ page }) => {
     await page.goto("./", { waitUntil: "networkidle" });
     const modal = page.getByTestId("vehicle-preview-modal");

@@ -1,61 +1,44 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import type { HeroSlideFraming } from "@/lib/hero-slide-framing";
 
-interface HeroVehicleSlideProps {
+interface HeroFullBleedSlideProps {
   src: string;
   alt: string;
   sizes: string;
   priority?: boolean;
+  framing: HeroSlideFraming;
   kenBurns?: boolean;
-  className?: string;
 }
 
-/** Fundo full-bleed desfocado (object-cover apenas no blur). */
-export function HeroVehicleBackdrop({
-  src,
-  sizes,
-  priority,
-}: Pick<HeroVehicleSlideProps, "src" | "sizes" | "priority">) {
-  return (
-    <div className="relative size-full">
-      <Image
-        src={src}
-        alt=""
-        fill
-        sizes={sizes}
-        priority={priority}
-        className="object-cover object-center blur-3xl brightness-[0.38] saturate-110 scale-[1.4]"
-        aria-hidden
-      />
-      <span
-        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/55 via-black/30 to-black/50"
-        aria-hidden
-      />
-    </div>
-  );
-}
-
-/** Carro inteiro visível (object-contain), sem moldura. */
-export function HeroVehicleForeground({
+/** Foto full-bleed estilo Porsche: object-cover, sem moldura/caixa. */
+export function HeroFullBleedSlide({
   src,
   alt,
   sizes,
   priority,
+  framing,
   kenBurns,
-  className,
-}: HeroVehicleSlideProps) {
+}: HeroFullBleedSlideProps) {
+  const canvasScale = framing.canvasScale ?? 1;
+  const expand = ((canvasScale - 1) / 2) * 100;
+
   return (
     <div
-      className={cn(
-        "relative flex size-full min-h-0 items-center justify-center p-2 sm:p-4",
-        className,
-      )}
+      className="absolute inset-0 overflow-hidden"
+      data-testid="hero-slide-media"
     >
       <div
         className={cn(
-          "relative h-full w-full",
-          kenBurns && "hero-ken-burns-subtle motion-reduce:transform-none",
+          "absolute",
+          kenBurns && "hero-ken-burns-cover motion-reduce:transform-none",
         )}
+        style={{
+          top: `-${expand}%`,
+          left: `-${expand}%`,
+          width: `${canvasScale * 100}%`,
+          height: `${canvasScale * 100}%`,
+        }}
       >
         <Image
           src={src}
@@ -63,7 +46,9 @@ export function HeroVehicleForeground({
           fill
           sizes={sizes}
           priority={priority}
-          className="object-contain object-center"
+          data-testid="hero-slide-image"
+          className="object-cover"
+          style={{ objectPosition: framing.objectPosition }}
         />
       </div>
     </div>
