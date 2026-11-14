@@ -1,6 +1,9 @@
 "use client";
 
-import { VehiclePhoto } from "@/components/vehicles/vehicle-photo";
+import {
+  HeroVehicleBackdrop,
+  HeroVehicleForeground,
+} from "@/components/home/hero-vehicle-slide";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   useCallback,
@@ -100,20 +103,21 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
   if (!current) return null;
 
   const titulo = `${current.marca} ${current.modelo}`;
+  const enableKenBurns = !reduceMotion;
 
   return (
     <section
-      className="relative -mt-[var(--header-offset,7.5rem)] flex h-[100svh] min-h-[560px] w-full flex-col"
+      className="relative -mt-[var(--header-offset,7.5rem)] flex h-[100svh] min-h-[560px] w-full flex-col overflow-hidden bg-[#0a1628]"
       data-testid="hero-carousel"
       data-active-index={selected}
       aria-roledescription="carrossel"
     >
-      <div className="absolute inset-0 overflow-hidden bg-[#0a1628]">
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
         <AnimatePresence mode="sync" initial={false}>
           {vehicles.map((v, i) =>
             i === selected ? (
               <motion.div
-                key={v.id}
+                key={`bg-${v.id}`}
                 className="absolute inset-0"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -123,43 +127,57 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
                   ease: EASE_OUT_PREMIUM,
                 }}
               >
-                <VehiclePhoto
+                <HeroVehicleBackdrop
                   src={localCoverPath(v)}
-                  alt={`${v.marca} ${v.modelo}`}
                   sizes="100vw"
                   priority={v.id === vehicles[0]?.id}
-                  padding="hero"
-                  heroBackdrop
-                  kenBurns={!reduceMotion}
-                  className="absolute inset-0"
                 />
               </motion.div>
             ) : null,
           )}
         </AnimatePresence>
-
-        <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/65 via-black/25 to-transparent sm:h-52"
-          aria-hidden
-        />
       </div>
 
-      <div className="relative z-10 flex h-full min-h-[560px] flex-col justify-end px-4 pb-14 pt-28 sm:px-8 sm:pb-16">
-        <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
+      <div className="relative z-10 mx-auto flex h-full w-full max-w-6xl min-h-0 flex-col px-4 pt-[5.5rem] pb-24 sm:px-8 lg:grid lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] lg:grid-rows-1 lg:items-stretch lg:gap-10 lg:px-8 lg:pt-24 lg:pb-20">
+        <div className="relative order-1 flex min-h-[48vh] flex-1 lg:order-2 lg:min-h-0 lg:h-full">
+          <AnimatePresence mode="sync" initial={false}>
+            {vehicles.map((v, i) =>
+              i === selected ? (
+                <motion.div
+                  key={`fg-${v.id}`}
+                  className="absolute inset-0"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{
+                    duration: reduceMotion ? 0 : CROSSFADE_S,
+                    ease: EASE_OUT_PREMIUM,
+                  }}
+                >
+                  <HeroVehicleForeground
+                    src={localCoverPath(v)}
+                    alt={`${v.marca} ${v.modelo}`}
+                    sizes="(max-width: 1023px) 100vw, 55vw"
+                    priority={v.id === vehicles[0]?.id}
+                    kenBurns={enableKenBurns}
+                  />
+                </motion.div>
+              ) : null,
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="relative z-20 order-2 flex shrink-0 flex-col justify-end gap-4 bg-gradient-to-t from-black/80 via-black/45 to-transparent pb-2 pt-6 lg:order-1 lg:justify-center lg:self-center lg:bg-none lg:pb-12 lg:pt-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
             Destaque do estoque
           </p>
-          <h1 className="max-w-2xl text-3xl font-bold leading-tight text-white sm:text-5xl">
+          <h1 className="text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl">
             {titulo}
           </h1>
           <p className="text-2xl font-semibold text-white/95 sm:text-3xl">
             {formatPreco(current.preco)}
           </p>
-          <div className="mt-2 flex flex-wrap items-center gap-3">
+          <div className="mt-1 flex flex-wrap items-center gap-3">
             <button
               type="button"
               data-testid="hero-slide-open"
@@ -179,7 +197,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-y-0 right-0 left-0 z-20 flex items-center justify-between px-1 sm:px-3">
+      <div className="pointer-events-none absolute inset-y-0 right-0 left-0 z-30 flex items-center justify-between px-1 sm:px-3">
         <Button
           type="button"
           variant="secondary"
@@ -206,7 +224,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
 
       <motion.button
         type="button"
-        className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 flex-col items-center gap-1 text-white/80 transition-colors duration-200 hover:text-white"
+        className="absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-1 text-white/80 transition-colors duration-200 hover:text-white"
         aria-label="Rolar para o conteúdo"
         onClick={() => {
           document.getElementById("busca-veiculo")?.scrollIntoView({
@@ -227,7 +245,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         type="button"
         variant="secondary"
         size="icon-lg"
-        className="absolute right-4 bottom-6 z-20 size-11 min-h-11 min-w-11 rounded-full border-white/20 bg-white/15 text-white backdrop-blur-md transition-colors duration-200 hover:bg-white/25 hover:text-white sm:right-8"
+        className="absolute right-4 bottom-6 z-30 size-11 min-h-11 min-w-11 rounded-full border-white/20 bg-white/15 text-white backdrop-blur-md transition-colors duration-200 hover:bg-white/25 hover:text-white sm:right-8"
         aria-label={paused ? "Retomar carrossel" : "Pausar carrossel"}
         data-testid="hero-carousel-pause"
         onClick={() => setPaused((p) => !p)}
@@ -235,7 +253,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
       </Button>
 
-      <div className="absolute bottom-6 left-1/2 z-20 flex -translate-x-1/2 translate-y-10 justify-center gap-1 sm:translate-y-12">
+      <div className="absolute bottom-6 left-1/2 z-30 flex -translate-x-1/2 translate-y-10 justify-center gap-1 sm:translate-y-12">
         {vehicles.map((v, i) => (
           <button
             key={v.id}
