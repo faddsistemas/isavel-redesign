@@ -3,6 +3,15 @@ import { test, expect } from "@playwright/test";
 const sampleDetail =
   "carros/jeep/renegade-s-t270-1-3-tb-4x4-flex-aut/2023/1174974/";
 
+async function advanceHeroSlide(page: import("@playwright/test").Page) {
+  const next = page.getByTestId("hero-carousel-next");
+  if (await next.isVisible()) {
+    await next.click();
+    return;
+  }
+  await page.getByTestId("hero-carousel-dot-1").click();
+}
+
 test.describe("Isavel redesign smoke", () => {
   test("Plus Jakarta Sans carrega (woff2 200 e font-family no body)", async ({
     page,
@@ -291,7 +300,7 @@ test.describe("Isavel redesign smoke", () => {
     const carousel = page.getByTestId("hero-carousel");
     const initial = await carousel.getAttribute("data-active-index");
 
-    await page.getByTestId("hero-carousel-next").click();
+    await advanceHeroSlide(page);
     await expect(modal).not.toBeVisible();
     await expect(carousel).not.toHaveAttribute("data-active-index", initial ?? "0");
 
@@ -307,7 +316,7 @@ test.describe("Isavel redesign smoke", () => {
 
   test("carrossel e modal abrem e fecham", async ({ page }) => {
     await page.goto("./", { waitUntil: "networkidle" });
-    await page.getByTestId("hero-carousel-next").click();
+    await advanceHeroSlide(page);
     await page.getByTestId("vehicle-card").first().click();
     const modal = page.getByTestId("vehicle-preview-modal");
     await expect(modal).toBeVisible();
