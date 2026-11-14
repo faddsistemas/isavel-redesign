@@ -199,9 +199,24 @@
   transform-origin: center center;
 }
 
+@keyframes hero-ken-burns-contain-max {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
+}
+
+.hero-ken-burns-contain-max {
+  animation: hero-ken-burns-contain-max 9s ease-out forwards;
+  transform-origin: center center;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-ken-burns-contain,
-  .hero-ken-burns-cover {
+  .hero-ken-burns-cover,
+  .hero-ken-burns-contain-max {
     animation: none;
     transform: scale(1);
   }

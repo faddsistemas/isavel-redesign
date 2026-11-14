@@ -141,21 +141,27 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         </AnimatePresence>
 
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/88 via-black/20 to-black/30"
+          className="pointer-events-none absolute inset-0 hidden bg-gradient-to-t from-black/50 via-transparent to-black/25 sm:block"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/65 via-black/25 to-transparent sm:h-52"
+          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/55 via-black/20 to-transparent sm:h-52"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-y-0 left-0 w-[min(100%,52rem)] bg-gradient-to-r from-black/55 via-black/20 to-transparent"
+          className="pointer-events-none absolute inset-y-0 left-0 hidden w-[min(100%,42rem)] bg-gradient-to-r from-black/70 via-black/35 to-transparent sm:block"
           aria-hidden
         />
       </div>
 
-      <div className="relative z-10 mt-auto flex w-full flex-col justify-end px-4 pb-[5.5rem] pt-24 sm:px-8 sm:pb-20">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-4 text-left">
+      <div
+        className="relative z-10 mt-auto flex w-full flex-col justify-end px-4 pb-[5.5rem] pt-8 sm:px-8 sm:pb-20 sm:pt-24"
+        data-testid="hero-slide-copy"
+      >
+        <div
+          className="flex w-fit max-w-[min(100%,22rem)] flex-col items-start gap-4 text-left"
+          data-testid="hero-slide-copy-inner"
+        >
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
             Destaque do estoque
           </p>

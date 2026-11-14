@@ -24,6 +24,10 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], viewport: { width: 1366, height: 768 } },
     },
     { name: "mobile", use: { ...devices["Pixel 5"], viewport: { width: 390, height: 844 } } },
+    {
+      name: "mobile-360",
+      use: { ...devices["Pixel 5"], viewport: { width: 360, height: 740 } },
+    },
   ],
   webServer: {
     command: `node scripts/serve-export.mjs ${PORT}`,

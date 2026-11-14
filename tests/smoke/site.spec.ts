@@ -121,7 +121,12 @@ test.describe("Isavel redesign smoke", () => {
     expect(errors.filter((e) => !e.includes("favicon"))).toEqual([]);
   });
 
-  test("hero: full-bleed object-cover em todos os slides", async ({ page }) => {
+  test("hero: contain sem moldura + bbox do carro fora do texto", async ({
+    page,
+  }, testInfo) => {
+    const isMobile = testInfo.project.name.startsWith("mobile");
+    const layout = isMobile ? "mobile" : "desktop";
+
     await page.goto("./", { waitUntil: "networkidle" });
     const carousel = page.getByTestId("hero-carousel");
     await expect(carousel).toBeVisible();
@@ -137,47 +142,146 @@ test.describe("Isavel redesign smoke", () => {
         await page.waitForTimeout(1_300);
       }
 
-      const metrics = await page.evaluate((index) => {
-        const section = document.querySelector(
-          '[data-testid="hero-carousel"]',
-        ) as HTMLElement | null;
-        if (!section || section.getAttribute("data-active-index") !== String(index)) {
-          return null;
-        }
-        const mediaEl = section.querySelector(
-          '[data-testid="hero-slide-media"]',
-        ) as HTMLElement | null;
-        const imgEl = section.querySelector(
-          '[data-testid="hero-slide-image"]',
-        ) as HTMLImageElement | null;
-        if (!mediaEl || !imgEl) return null;
+      const metrics = await page.evaluate(
+        ({ index, layoutName }) => {
+          const parsePos = (objectPosition: string) => {
+            const parts = objectPosition.trim().split(/\s+/);
+            const parse = (token: string | undefined, fallback: number) => {
+              if (!token) return fallback;
+              if (token.endsWith("%")) return Number.parseFloat(token) / 100;
+              if (token === "left" || token === "top") return 0;
+              if (token === "right" || token === "bottom") return 1;
+              if (token === "center") return 0.5;
+              return fallback;
+            };
+            return { x: parse(parts[0], 0.5), y: parse(parts[1] ?? parts[0], 0.5) };
+          };
 
-        const s = section.getBoundingClientRect();
-        const m = mediaEl.getBoundingClientRect();
-        const imgFit = getComputedStyle(imgEl).objectFit;
-        let opacity = 1;
-        let node: HTMLElement | null = mediaEl;
-        while (node && node !== section) {
-          opacity *= Number.parseFloat(getComputedStyle(node).opacity);
-          node = node.parentElement;
-        }
-        const hasBlurPanel = Boolean(
-          section.querySelector('[data-testid="hero-foreground-box"]'),
-        );
-        return {
-          sectionW: s.width,
-          mediaW: m.width,
-          imgFit,
-          hasBlurPanel,
-          opacity,
-        };
-      }, i);
+          const objectContainImageRect = (
+            container: { width: number; height: number },
+            imageAspect: number,
+            objectPosition: string,
+          ) => {
+            const { x, y } = parsePos(objectPosition);
+            const cw = container.width;
+            const ch = container.height;
+            const containerAspect = cw / ch;
+            let width: number;
+            let height: number;
+            if (containerAspect > imageAspect) {
+              height = ch;
+              width = ch * imageAspect;
+            } else {
+              width = cw;
+              height = cw / imageAspect;
+            }
+            const freeX = cw - width;
+            const freeY = ch - height;
+            return {
+              left: freeX * x,
+              top: freeY * y,
+              width,
+              height,
+            };
+          };
+
+          const section = document.querySelector(
+            '[data-testid="hero-carousel"]',
+          ) as HTMLElement | null;
+          if (!section || section.getAttribute("data-active-index") !== String(index)) {
+            return null;
+          }
+
+          const media = section.querySelector(
+            '[data-testid="hero-slide-media"]',
+          ) as HTMLElement | null;
+          const layoutEl = media?.querySelector(
+            `[data-hero-layout="${layoutName}"]`,
+          ) as HTMLElement | null;
+          const img = layoutEl?.querySelector(
+            '[data-testid="hero-slide-image"]',
+          ) as HTMLImageElement | null;
+          const copy = section.querySelector(
+            '[data-testid="hero-slide-copy-inner"]',
+          ) as HTMLElement | null;
+          if (!media || !layoutEl || !img || !copy) return null;
+
+          const dataset = media.getAttribute("data-hero-framing");
+          if (!dataset) return null;
+          const [aspectStr, bboxStr, desktopPos, mobilePos] = dataset.split("|");
+          const imageAspect = Number.parseFloat(aspectStr);
+          const [bl, bt, br, bb] = bboxStr.split(",").map(Number);
+          const objectPosition = layoutName === "desktop" ? desktopPos : mobilePos;
+
+          const container = layoutEl.getBoundingClientRect();
+          const hero = section.getBoundingClientRect();
+          const text = copy.getBoundingClientRect();
+          const local = objectContainImageRect(
+            { width: container.width, height: container.height },
+            imageAspect,
+            objectPosition,
+          );
+          const imageRect = {
+            left: container.left + local.left,
+            top: container.top + local.top,
+            width: local.width,
+            height: local.height,
+          };
+
+          const car = {
+            left: imageRect.left + bl * imageRect.width,
+            top: imageRect.top + bt * imageRect.height,
+            right: imageRect.left + br * imageRect.width,
+            bottom: imageRect.top + bb * imageRect.height,
+          };
+
+          const visible =
+            layoutName === "desktop"
+              ? hero
+              : {
+                  left: container.left,
+                  top: container.top,
+                  right: container.right,
+                  bottom: container.bottom,
+                };
+
+          const inside =
+            car.left >= visible.left - 3 &&
+            car.top >= visible.top - 3 &&
+            car.right <= visible.right + 3 &&
+            car.bottom <= visible.bottom + 3;
+
+          const overlapText = !(
+            car.right <= text.left + 6 ||
+            car.left >= text.right - 6 ||
+            car.bottom <= text.top + 6 ||
+            car.top >= text.bottom - 6
+          );
+
+          const mediaBox = media.getBoundingClientRect();
+
+          return {
+            imgFit: getComputedStyle(img).objectFit,
+            hasBlurPanel: Boolean(
+              section.querySelector('[data-testid="hero-foreground-box"]'),
+            ),
+            mediaFullWidth:
+              layoutName === "desktop"
+                ? mediaBox.width >= hero.width * 0.98
+                : container.width >= hero.width * 0.98,
+            inside,
+            overlapText,
+          };
+        },
+        { index: i, layoutName: layout },
+      );
 
       expect(metrics).not.toBeNull();
       expect(metrics!.hasBlurPanel).toBe(false);
-      expect(metrics!.imgFit).toBe("cover");
-      expect(metrics!.opacity).toBeGreaterThanOrEqual(0.99);
-      expect(metrics!.mediaW).toBeGreaterThanOrEqual(metrics!.sectionW * 0.98);
+      expect(metrics!.imgFit).toBe("contain");
+      expect(metrics!.mediaFullWidth).toBe(true);
+      expect(metrics!.inside).toBe(true);
+      expect(metrics!.overlapText, `slide ${i}`).toBe(false);
     }
   });
 
