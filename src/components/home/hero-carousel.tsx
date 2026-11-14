@@ -141,21 +141,17 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         </AnimatePresence>
 
         <div
-          className="pointer-events-none absolute inset-0 hidden bg-gradient-to-t from-black/50 via-transparent to-black/25 sm:block"
+          className="pointer-events-none absolute inset-x-0 top-0 hidden h-44 bg-gradient-to-b from-black/50 via-black/15 to-transparent sm:block sm:h-52"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/55 via-black/20 to-transparent sm:h-52"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 hidden w-[min(100%,42rem)] bg-gradient-to-r from-black/70 via-black/35 to-transparent sm:block"
+          className="pointer-events-none absolute inset-y-0 left-0 hidden w-[min(100%,38rem)] bg-gradient-to-r from-[#0a1628] via-[#0a1628]/80 to-transparent sm:block"
           aria-hidden
         />
       </div>
 
       <div
-        className="relative z-10 mt-auto flex w-full flex-col justify-end px-4 pb-[5.5rem] pt-8 sm:px-8 sm:pb-20 sm:pt-24"
+        className="relative z-10 mt-auto flex w-full flex-col justify-end px-4 pb-[5.5rem] pt-8 max-sm:absolute max-sm:inset-x-0 max-sm:top-[58svh] max-sm:mt-0 max-sm:justify-end max-sm:pb-28 max-sm:pt-2 sm:px-8 sm:pb-20 sm:pt-24"
         data-testid="hero-slide-copy"
       >
         <div
@@ -191,7 +187,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         </div>
       </div>
 
-      <div className="pointer-events-none absolute inset-y-0 right-0 left-0 z-20 flex items-center justify-between px-1 sm:px-3">
+      <div className="pointer-events-none absolute inset-y-0 right-0 left-0 z-20 hidden items-center justify-between px-1 sm:flex sm:px-3">
         <Button
           type="button"
           variant="secondary"

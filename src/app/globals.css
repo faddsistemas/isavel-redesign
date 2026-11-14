@@ -213,6 +213,41 @@
   transform-origin: center center;
 }
 
+/* Hero Porsche: cover com transição suave — sem retângulo duro */
+.hero-photo-pane-desktop {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgb(0 0 0 / 0.45) 6%,
+    black 20%,
+    black 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgb(0 0 0 / 0.45) 6%,
+    black 20%,
+    black 100%
+  );
+}
+
+.hero-photo-pane-mobile {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 58%,
+    rgb(0 0 0 / 0.55) 78%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 58%,
+    rgb(0 0 0 / 0.55) 78%,
+    transparent 100%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-ken-burns-contain,
   .hero-ken-burns-cover,

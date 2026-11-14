@@ -11,62 +11,86 @@ export interface HeroSlideFraming {
   carBbox: NormalizedBbox;
   desktop: {
     objectPosition: string;
+    /** Início da faixa da foto (0–1 da largura do hero). */
+    panelStart: number;
     kenBurnsScale: number;
   };
   mobile: {
     objectPosition: string;
-    /** Altura da faixa da foto em svh (resto = gradiente + texto). */
+    /** Altura da faixa da foto em svh. */
     bandSvh: number;
     kenBurnsScale: number;
   };
 }
 
+export function bboxFocalPosition(bbox: NormalizedBbox): string {
+  const x = ((bbox.l + bbox.r) / 2) * 100;
+  const y = ((bbox.t + bbox.b) / 2) * 100;
+  return `${x.toFixed(1)}% ${y.toFixed(1)}%`;
+}
+
 const ASPECT_1920 = 1920 / 1440;
 const ASPECT_1290 = 1290 / 966;
 
+function frame(
+  partial: Omit<HeroSlideFraming, "desktop" | "mobile"> & {
+    desktop?: Partial<HeroSlideFraming["desktop"]>;
+    mobile?: Partial<HeroSlideFraming["mobile"]>;
+  },
+): HeroSlideFraming {
+  const focal = bboxFocalPosition(partial.carBbox);
+  return {
+    ...partial,
+    desktop: {
+      objectPosition: focal,
+      panelStart: 0.32,
+      kenBurnsScale: 1.03,
+      ...partial.desktop,
+    },
+    mobile: {
+      objectPosition: focal,
+      bandSvh: 63,
+      kenBurnsScale: 1,
+      ...partial.mobile,
+    },
+  };
+}
+
 const BY_ID: Record<number, HeroSlideFraming> = {
-  1024455: {
+  1024455: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
     carBbox: { l: 0.05, t: 0.16, r: 0.94, b: 0.8 },
-    desktop: { objectPosition: "80% 40%", kenBurnsScale: 1.03 },
-    mobile: { objectPosition: "50% 48%", bandSvh: 54, kenBurnsScale: 1 },
-  },
-  1160040: {
+  }),
+  1160040: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
     carBbox: { l: 0.05, t: 0.16, r: 0.94, b: 0.8 },
-    desktop: { objectPosition: "80% 40%", kenBurnsScale: 1.03 },
-    mobile: { objectPosition: "50% 48%", bandSvh: 54, kenBurnsScale: 1 },
-  },
-  1029170: {
+  }),
+  1029170: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
     carBbox: { l: 0.08, t: 0.14, r: 0.93, b: 0.82 },
-    desktop: { objectPosition: "78% 38%", kenBurnsScale: 1.03 },
-    mobile: { objectPosition: "50% 46%", bandSvh: 53, kenBurnsScale: 1 },
-  },
-  1056873: {
+    desktop: { panelStart: 0.3 },
+  }),
+  1056873: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
     carBbox: { l: 0.06, t: 0.13, r: 0.92, b: 0.84 },
-    desktop: { objectPosition: "76% 38%", kenBurnsScale: 1.03 },
-    mobile: { objectPosition: "50% 45%", bandSvh: 53, kenBurnsScale: 1 },
-  },
-  1004365: {
+    desktop: { panelStart: 0.3 },
+  }),
+  1004365: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1290,
     carBbox: { l: 0.07, t: 0.12, r: 0.9, b: 0.83 },
-    desktop: { objectPosition: "74% 36%", kenBurnsScale: 1.03 },
-    mobile: { objectPosition: "50% 44%", bandSvh: 52, kenBurnsScale: 1 },
-  },
-  1161984: {
+    desktop: { panelStart: 0.34 },
+  }),
+  1161984: frame({
     photoIndex: 5,
     imageAspect: ASPECT_1290,
     carBbox: { l: 0.06, t: 0.1, r: 0.88, b: 0.82 },
-    desktop: { objectPosition: "72% 36%", kenBurnsScale: 1.03 },
-    mobile: { objectPosition: "48% 42%", bandSvh: 52, kenBurnsScale: 1 },
-  },
+    desktop: { panelStart: 0.34 },
+  }),
 };
 
 const BY_MODEL: Record<string, HeroSlideFraming> = {
@@ -76,13 +100,12 @@ const BY_MODEL: Record<string, HeroSlideFraming> = {
   compass: BY_ID[1161984]!,
 };
 
-const DEFAULT: HeroSlideFraming = {
+const DEFAULT: HeroSlideFraming = frame({
   photoIndex: 0,
   imageAspect: ASPECT_1920,
   carBbox: { l: 0.08, t: 0.12, r: 0.92, b: 0.88 },
-  desktop: { objectPosition: "58% 50%", kenBurnsScale: 1.02 },
-  mobile: { objectPosition: "50% 45%", bandSvh: 52, kenBurnsScale: 1 },
-};
+  desktop: { kenBurnsScale: 1.02, panelStart: 0.32 },
+});
 
 function modelKey(modelo: string): string {
   const m = modelo.toLowerCase();
@@ -118,5 +141,6 @@ export function heroFramingDataset(framing: HeroSlideFraming): string {
     framing.desktop.objectPosition,
     framing.mobile.objectPosition,
     String(framing.mobile.bandSvh),
+    framing.desktop.panelStart.toFixed(3),
   ].join("|");
 }

@@ -12,7 +12,7 @@ interface HeroFullBleedSlideProps {
   kenBurns?: boolean;
 }
 
-/** Desktop: faixa direita com contain (carro inteiro). Mobile: topo + gradiente. */
+/** Cover com máscara suave (Porsche): carro inteiro, sem bordas duras. */
 export function HeroFullBleedSlide({
   src,
   alt,
@@ -25,10 +25,7 @@ export function HeroFullBleedSlide({
     kenBurns && framing.desktop.kenBurnsScale > 1
       ? "hero-ken-burns-contain-max motion-reduce:transform-none"
       : undefined;
-  const mobileKen =
-    kenBurns && framing.mobile.kenBurnsScale > 1
-      ? "hero-ken-burns-contain-max motion-reduce:transform-none"
-      : undefined;
+  const desktopPanelStart = `${framing.desktop.panelStart * 100}%`;
 
   return (
     <div
@@ -37,8 +34,10 @@ export function HeroFullBleedSlide({
       data-hero-framing={heroFramingDataset(framing)}
     >
       <div
-        className="absolute inset-y-0 right-0 hidden left-[min(52%,36rem)] sm:block"
+        className="hero-photo-pane-desktop absolute inset-y-0 right-0 hidden sm:block"
+        style={{ left: desktopPanelStart }}
         data-hero-layout="desktop"
+        data-hero-soft-edge="true"
       >
         <MotionPad kenBurns={desktopKen}>
           <Image
@@ -48,18 +47,23 @@ export function HeroFullBleedSlide({
             sizes={sizes}
             priority={priority}
             data-testid="hero-slide-image"
-            className="object-contain"
+            className="object-cover"
             style={{ objectPosition: framing.desktop.objectPosition }}
           />
         </MotionPad>
+        <div
+          className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a1628]/45 via-transparent to-[#0a1628]/35"
+          aria-hidden
+        />
       </div>
 
       <div
-        className="absolute inset-x-0 top-0 sm:hidden"
+        className="hero-photo-pane-mobile absolute inset-x-0 top-0 sm:hidden"
         style={{ height: `${framing.mobile.bandSvh}svh` }}
         data-hero-layout="mobile"
+        data-hero-soft-edge="true"
       >
-        <MotionPad kenBurns={mobileKen}>
+        <MotionPad kenBurns={undefined}>
           <Image
             src={src}
             alt={alt}
@@ -67,21 +71,15 @@ export function HeroFullBleedSlide({
             sizes="100vw"
             priority={priority}
             data-testid="hero-slide-image"
-            className="object-contain"
+            className="object-cover"
             style={{ objectPosition: framing.mobile.objectPosition }}
           />
         </MotionPad>
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-[min(28%,9rem)] bg-gradient-to-b from-transparent via-[#0a1628]/55 to-[#0a1628]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-[#0a1628]/40 to-[#0a1628]"
           aria-hidden
         />
       </div>
-
-      <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 bg-[#0a1628] sm:hidden"
-        style={{ top: `${framing.mobile.bandSvh}svh` }}
-        aria-hidden
-      />
     </div>
   );
 }
@@ -94,13 +92,6 @@ function MotionPad({
   kenBurns?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "absolute inset-0 overflow-hidden bg-[#0a1628]",
-        kenBurns,
-      )}
-    >
-      {children}
-    </div>
+    <div className={cn("absolute inset-0 overflow-hidden", kenBurns)}>{children}</div>
   );
 }

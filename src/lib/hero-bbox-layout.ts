@@ -27,6 +27,29 @@ export function parseObjectPosition(
   };
 }
 
+export function objectCoverImageRect(
+  container: { width: number; height: number },
+  imageAspect: number,
+  objectPosition: string,
+): { left: number; top: number; width: number; height: number } {
+  const { x, y } = parseObjectPosition(objectPosition);
+  const cw = container.width;
+  const ch = container.height;
+  const containerAspect = cw / ch;
+
+  if (containerAspect > imageAspect) {
+    const height = ch;
+    const width = ch * imageAspect;
+    const overflow = width - cw;
+    return { left: -overflow * x, top: 0, width, height };
+  }
+
+  const width = cw;
+  const height = cw / imageAspect;
+  const overflow = height - ch;
+  return { left: 0, top: -overflow * y, width, height };
+}
+
 export function objectContainImageRect(
   container: { width: number; height: number },
   imageAspect: number,

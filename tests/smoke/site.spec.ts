@@ -121,7 +121,7 @@ test.describe("Isavel redesign smoke", () => {
     expect(errors.filter((e) => !e.includes("favicon"))).toEqual([]);
   });
 
-  test("hero: contain sem moldura + bbox do carro fora do texto", async ({
+  test("hero: cover com fade suave + bbox do carro visível", async ({
     page,
   }, testInfo) => {
     const isMobile = testInfo.project.name.startsWith("mobile");
@@ -157,7 +157,7 @@ test.describe("Isavel redesign smoke", () => {
             return { x: parse(parts[0], 0.5), y: parse(parts[1] ?? parts[0], 0.5) };
           };
 
-          const objectContainImageRect = (
+          const objectCoverImageRect = (
             container: { width: number; height: number },
             imageAspect: number,
             objectPosition: string,
@@ -166,23 +166,16 @@ test.describe("Isavel redesign smoke", () => {
             const cw = container.width;
             const ch = container.height;
             const containerAspect = cw / ch;
-            let width: number;
-            let height: number;
             if (containerAspect > imageAspect) {
-              height = ch;
-              width = ch * imageAspect;
-            } else {
-              width = cw;
-              height = cw / imageAspect;
+              const height = ch;
+              const width = ch * imageAspect;
+              const overflow = width - cw;
+              return { left: -overflow * x, top: 0, width, height };
             }
-            const freeX = cw - width;
-            const freeY = ch - height;
-            return {
-              left: freeX * x,
-              top: freeY * y,
-              width,
-              height,
-            };
+            const width = cw;
+            const height = cw / imageAspect;
+            const overflow = height - ch;
+            return { left: 0, top: -overflow * y, width, height };
           };
 
           const section = document.querySelector(
@@ -216,7 +209,12 @@ test.describe("Isavel redesign smoke", () => {
           const container = layoutEl.getBoundingClientRect();
           const hero = section.getBoundingClientRect();
           const text = copy.getBoundingClientRect();
-          const local = objectContainImageRect(
+          const softEdge = layoutEl.getAttribute("data-hero-soft-edge") === "true";
+          const maskImage =
+            getComputedStyle(layoutEl).maskImage ||
+            getComputedStyle(layoutEl).webkitMaskImage;
+
+          const local = objectCoverImageRect(
             { width: container.width, height: container.height },
             imageAspect,
             objectPosition,
@@ -265,6 +263,7 @@ test.describe("Isavel redesign smoke", () => {
             hasBlurPanel: Boolean(
               section.querySelector('[data-testid="hero-foreground-box"]'),
             ),
+            softEdge: softEdge && maskImage !== "none",
             mediaFullWidth:
               layoutName === "desktop"
                 ? mediaBox.width >= hero.width * 0.98
@@ -278,7 +277,8 @@ test.describe("Isavel redesign smoke", () => {
 
       expect(metrics).not.toBeNull();
       expect(metrics!.hasBlurPanel).toBe(false);
-      expect(metrics!.imgFit).toBe("contain");
+      expect(metrics!.imgFit).toBe("cover");
+      expect(metrics!.softEdge).toBe(true);
       expect(metrics!.mediaFullWidth).toBe(true);
       expect(metrics!.inside).toBe(true);
       expect(metrics!.overlapText, `slide ${i}`).toBe(false);
