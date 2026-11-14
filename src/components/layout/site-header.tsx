@@ -3,11 +3,12 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, Phone, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HORARIO, PHONE_ABAETE, PHONE_ABAETE_RAW } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { withBasePath } from "@/lib/base-path";
+import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/estoque/", label: "Estoque" },
@@ -19,9 +20,11 @@ const NAV = [
 function NavLinks({
   className,
   onNavigate,
+  onHero,
 }: {
   className?: string;
   onNavigate?: () => void;
+  onHero?: boolean;
 }) {
   return (
     <nav
@@ -35,7 +38,12 @@ function NavLinks({
           key={item.href}
           href={item.href}
           onClick={onNavigate}
-          className="link-underline text-sm font-semibold uppercase tracking-wide text-foreground transition-colors duration-200 hover:text-primary"
+          className={cn(
+            "link-underline text-sm font-semibold uppercase tracking-wide transition-colors duration-200",
+            onHero
+              ? "nav-on-hero text-white hover:text-white/90"
+              : "text-foreground hover:text-primary",
+          )}
         >
           {item.label}
         </Link>
@@ -46,6 +54,35 @@ function NavLinks({
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isHome = pathname === "/" || pathname === "";
+  const [pastHero, setPastHero] = useState(false);
+  const overHero = isHome && !pastHero;
+
+  const syncHeroScroll = useCallback(() => {
+    const hero = document.querySelector('[data-testid="hero-carousel"]');
+    if (!hero) {
+      setPastHero(false);
+      return;
+    }
+    const rect = hero.getBoundingClientRect();
+    setPastHero(rect.bottom <= 80);
+  }, []);
+
+  useEffect(() => {
+    if (!isHome) {
+      setPastHero(true);
+      return;
+    }
+    setPastHero(false);
+    syncHeroScroll();
+    window.addEventListener("scroll", syncHeroScroll, { passive: true });
+    window.addEventListener("resize", syncHeroScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", syncHeroScroll);
+      window.removeEventListener("resize", syncHeroScroll);
+    };
+  }, [isHome, syncHeroScroll]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -56,17 +93,30 @@ export function SiteHeader() {
 
   return (
     <>
-      <div className="relative z-50 bg-primary px-4 py-2 text-center text-xs text-primary-foreground sm:text-sm">
+      <div
+        className={cn(
+          "relative z-50 px-4 py-2 text-center text-xs transition-colors duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)] sm:text-sm",
+          overHero
+            ? "bg-black/40 text-white/95 backdrop-blur-sm"
+            : "bg-primary text-primary-foreground",
+        )}
+      >
         {HORARIO}
       </div>
       <header
-        className="sticky top-0 z-50 w-full border-b border-border bg-white/95 shadow-sm backdrop-blur-md"
+        data-header-over-hero={overHero ? "true" : "false"}
+        className={cn(
+          "sticky top-0 z-50 w-full border-b transition-[background-color,border-color,box-shadow] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
+          overHero
+            ? "border-transparent bg-transparent shadow-none"
+            : "border-border bg-white/95 shadow-sm backdrop-blur-md",
+        )}
         style={{ ["--header-offset" as string]: "7.5rem" }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <Link
             href="/"
-            className="shrink-0 rounded-lg bg-white px-2 py-1 shadow-sm ring-1 ring-border/60"
+            className="shrink-0 rounded-lg bg-white/95 px-2.5 py-1.5 shadow-md ring-1 ring-white/50"
           >
             <Image
               src={withBasePath("/assets/logo.png")}
@@ -79,10 +129,15 @@ export function SiteHeader() {
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
-            <NavLinks />
+            <NavLinks onHero={overHero} />
             <a
               href={`tel:${PHONE_ABAETE_RAW}`}
-              className="flex items-center gap-2 text-sm font-medium text-primary transition-colors duration-200"
+              className={cn(
+                "flex items-center gap-2 text-sm font-medium transition-colors duration-200",
+                overHero
+                  ? "nav-on-hero text-white hover:text-white/90"
+                  : "text-primary",
+              )}
             >
               <Phone className="size-4" aria-hidden />
               {PHONE_ABAETE}
@@ -90,9 +145,13 @@ export function SiteHeader() {
           </div>
 
           <Button
-            variant="outline"
+            variant={overHero ? "secondary" : "outline"}
             size="icon-lg"
-            className="lg:hidden"
+            className={cn(
+              "lg:hidden",
+              overHero &&
+                "border-white/35 bg-white/15 text-white backdrop-blur-md hover:bg-white/25",
+            )}
             aria-label="Abrir menu"
             onClick={() => setOpen(true)}
           >

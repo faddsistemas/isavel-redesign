@@ -142,7 +142,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-transparent"
+          className="pointer-events-none absolute inset-x-0 top-0 h-44 bg-gradient-to-b from-black/65 via-black/25 to-transparent sm:h-52"
           aria-hidden
         />
       </div>
