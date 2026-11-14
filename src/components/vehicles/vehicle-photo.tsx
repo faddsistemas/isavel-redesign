@@ -7,7 +7,8 @@ const PADDING: Record<VehiclePhotoPadding, string> = {
   none: "inset-0",
   sm: "inset-2 sm:inset-3",
   md: "inset-3 sm:inset-4",
-  hero: "inset-4 pt-24 pb-20 sm:inset-6 sm:pt-28 sm:pb-24",
+  hero:
+    "inset-x-1 top-[max(4.75rem,11%)] bottom-[max(11rem,30%)] sm:inset-x-3 sm:top-[max(5rem,12%)] sm:bottom-[max(12rem,28%)]",
 };
 
 export interface VehiclePhotoProps {
@@ -19,6 +20,8 @@ export interface VehiclePhotoProps {
   kenBurns?: boolean;
   hoverZoom?: boolean;
   padding?: VehiclePhotoPadding;
+  /** Fundo desfocado extra escuro (hero full-bleed) */
+  heroBackdrop?: boolean;
 }
 
 /**
@@ -33,11 +36,13 @@ export function VehiclePhoto({
   kenBurns,
   hoverZoom,
   padding = "sm",
+  heroBackdrop,
 }: VehiclePhotoProps) {
   return (
     <div
       className={cn(
-        "relative size-full overflow-hidden bg-[#e8ecf0]",
+        "relative size-full overflow-hidden",
+        heroBackdrop ? "bg-[#0a1628]" : "bg-[#e8ecf0]",
         className,
       )}
     >
@@ -47,9 +52,20 @@ export function VehiclePhoto({
         fill
         sizes={sizes}
         priority={priority}
-        className="object-cover scale-125 object-center blur-2xl brightness-95 saturate-125"
+        className={cn(
+          "object-cover object-center blur-3xl saturate-110",
+          heroBackdrop
+            ? "scale-[1.35] brightness-[0.4]"
+            : "scale-125 brightness-95",
+        )}
         aria-hidden
       />
+      {heroBackdrop ? (
+        <span
+          className="pointer-events-none absolute inset-0 bg-black/45"
+          aria-hidden
+        />
+      ) : null}
       <div
         className={cn(
           "absolute",

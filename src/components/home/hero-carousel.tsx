@@ -103,7 +103,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
 
   return (
     <section
-      className="relative -mt-[var(--header-offset,7.5rem)] min-h-[min(100svh,920px)] w-full"
+      className="relative -mt-[var(--header-offset,7.5rem)] flex h-[100svh] min-h-[560px] w-full flex-col"
       data-testid="hero-carousel"
       data-active-index={selected}
       aria-roledescription="carrossel"
@@ -129,6 +129,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
                   sizes="100vw"
                   priority={v.id === vehicles[0]?.id}
                   padding="hero"
+                  heroBackdrop
                   kenBurns={!reduceMotion}
                   className="absolute inset-0"
                 />
@@ -147,7 +148,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         />
       </div>
 
-      <div className="relative z-10 flex min-h-[min(100svh,920px)] flex-col justify-end px-4 pb-16 pt-32 sm:px-8 sm:pb-20">
+      <div className="relative z-10 flex h-full min-h-[560px] flex-col justify-end px-4 pb-14 pt-28 sm:px-8 sm:pb-16">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
             Destaque do estoque
