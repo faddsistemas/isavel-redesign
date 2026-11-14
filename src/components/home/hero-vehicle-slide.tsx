@@ -1,37 +1,29 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import {
-  heroFramingDataset,
-  heroFramingDatasetMobile,
-  type HeroSlideFraming,
-} from "@/lib/hero-slide-framing";
+import { heroFramingDataset, type HeroSlideFraming } from "@/lib/hero-slide-framing";
 
 interface HeroFullBleedSlideProps {
-  desktopSrc: string;
-  mobileSrc: string;
+  src: string;
   alt: string;
   sizes: string;
   priority?: boolean;
   framing: HeroSlideFraming;
   kenBurns?: boolean;
   mobileObjectPosition?: string;
-  mobileLongFade?: boolean;
-  /** Quando true, o painel mobile usa height:100% (altura vem do wrapper). */
+  /** Mobile: altura vem do wrapper pai (h-full). */
   mobileHeightFromParent?: boolean;
 }
 
-/** Desktop inalterado (sm+). Mobile: <picture> + cover dimensionado pelo carBbox mobile. */
+/** Desktop inalterado (sm+). Mobile: cover dimensionado pelo carBbox (foto 3/4). */
 export function HeroFullBleedSlide({
-  desktopSrc,
-  mobileSrc,
+  src,
   alt,
   sizes,
   priority,
   framing,
   kenBurns,
   mobileObjectPosition,
-  mobileLongFade,
   mobileHeightFromParent,
 }: HeroFullBleedSlideProps) {
   const desktopKen =
@@ -40,6 +32,10 @@ export function HeroFullBleedSlide({
       : undefined;
   const desktopPanelStart = `${framing.desktop.panelStart * 100}%`;
   const mobilePos = mobileObjectPosition ?? framing.mobile.objectPosition;
+  const mobileHeight = mobileHeightFromParent
+    ? undefined
+    : "var(--hero-mobile-media-h, 52svh)";
+
   return (
     <div
       className="relative h-full w-full bg-[#0a1628] sm:absolute sm:inset-0"
@@ -54,7 +50,7 @@ export function HeroFullBleedSlide({
       >
         <MotionPad kenBurns={desktopKen}>
           <Image
-            src={desktopSrc}
+            src={src}
             alt={alt}
             fill
             sizes={sizes}
@@ -72,36 +68,31 @@ export function HeroFullBleedSlide({
 
       <div
         className={cn(
-          "hero-photo-pane-mobile absolute inset-x-0 top-0 w-full sm:hidden",
-          mobileLongFade && "hero-photo-pane-mobile--long-fade",
-          mobileHeightFromParent ? "h-full" : "h-[var(--hero-mobile-media-h,55svh)]",
+          "hero-photo-pane-mobile relative w-full sm:hidden",
+          mobileHeightFromParent ? "h-full" : "",
         )}
+        style={mobileHeight ? { height: mobileHeight } : undefined}
         data-hero-layout="mobile"
         data-hero-soft-edge="true"
-        data-hero-framing={heroFramingDatasetMobile(framing)}
+        data-hero-framing={heroFramingDataset(framing)}
       >
         <MotionPad kenBurns={undefined}>
-          <picture className="absolute inset-0 block size-full">
-            <source media="(max-width: 767px)" srcSet={mobileSrc} />
-            <Image
-              key={mobileSrc}
-              src={mobileSrc}
-              alt={alt}
-              fill
-              sizes="100vw"
-              priority={priority}
-              data-testid="hero-slide-image"
-              className="object-cover"
-              style={{ objectPosition: mobilePos }}
-            />
-          </picture>
+          <Image
+            key={src}
+            src={src}
+            alt={alt}
+            fill
+            sizes="100vw"
+            priority={priority}
+            data-testid="hero-slide-image"
+            className="object-cover"
+            style={{ objectPosition: mobilePos }}
+          />
         </MotionPad>
         <div
-          className={cn(
-            "pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-b from-transparent to-[#0a1628]",
-            mobileLongFade ? "h-32" : "h-20",
-          )}
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-b from-transparent to-[#0a1628]"
           aria-hidden
+          data-testid="hero-mobile-fade"
         />
       </div>
     </div>

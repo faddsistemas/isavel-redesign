@@ -152,6 +152,9 @@ test.describe("Isavel redesign smoke", () => {
       });
     }
     const slideCount = await page.getByTestId(/^hero-carousel-dot-/).count();
+    const heroVehicleIds = [
+      1024455, 1160040, 1029170, 1056873, 1004365, 1161984,
+    ];
 
     for (let i = 0; i < slideCount; i++) {
       if (i > 0) {
@@ -163,8 +166,24 @@ test.describe("Isavel redesign smoke", () => {
           await expect(carousel).toHaveAttribute("data-mobile-media-height", /^\d+$/, {
             timeout: 5_000,
           });
+          const vehicleId = heroVehicleIds[i];
+          if (vehicleId != null) {
+            await page.waitForFunction(
+              (id) => {
+                const img = document.querySelector(
+                  '[data-hero-layout="mobile"] [data-testid="hero-slide-image"]',
+                ) as HTMLImageElement | null;
+                return Boolean(img?.currentSrc.includes(`/vehicles/${id}/`));
+              },
+              vehicleId,
+              { timeout: 8_000 },
+            );
+          }
         }
-        await page.waitForTimeout(800);
+        await page.waitForTimeout(400);
+        if (isMobile) {
+          await page.evaluate(() => window.scrollTo(0, 0));
+        }
       }
 
       const metrics = await page.evaluate(
@@ -306,36 +325,62 @@ test.describe("Isavel redesign smoke", () => {
             const bboxW_px = (br - bl) * naturalW;
             const ceiling =
               (naturalH * (container.width * 0.96)) / bboxW_px;
-            const svhCap =
-              (62 / 100) * section.getBoundingClientRect().height;
+            const vh =
+              window.innerHeight || section.getBoundingClientRect().height;
+            const svhCap = (58 / 100) * vh;
             const allowed = Math.min(ceiling, svhCap) + 4;
             withinCeiling = container.height <= allowed;
           }
 
-          const svhHeight = section.getBoundingClientRect().height;
-          const minMediaWhenPossible =
-            layoutName === "mobile" && naturalW > 0 && naturalH > 0
-              ? (() => {
-                  const bboxW_px = (br - bl) * naturalW;
-                  const ceilingPx =
-                    (naturalH * (container.width * 0.96)) / bboxW_px;
-                  const target = svhHeight * 0.5;
-                  return ceilingPx >= target - 2
-                    ? container.height >= target - 6
-                    : true;
-                })()
-              : true;
-
+          let mediaToTextGap: number | null = null;
           let ctaFooterGap: number | null = null;
+          let carBelowHeader = true;
+          let fabClearsFooter = true;
           if (layoutName === "mobile") {
-            const footer = section.querySelector(
-              '[data-testid="hero-mobile-footer"]',
+            const mediaWrap = section.querySelector(
+              '[data-testid="hero-mobile-media-wrap"]',
             ) as HTMLElement | null;
+            const destaque = copy.querySelector("p");
             const ctaRow = copy.querySelector(
               '[data-testid="hero-slide-open"]',
             ) as HTMLElement | null;
+            const footer = section.querySelector(
+              '[data-testid="hero-mobile-footer"]',
+            ) as HTMLElement | null;
+            const siteHeader = document.querySelector("header");
+            if (mediaWrap && destaque) {
+              mediaToTextGap =
+                destaque.getBoundingClientRect().top -
+                mediaWrap.getBoundingClientRect().bottom;
+            }
             if (footer && ctaRow) {
-              ctaFooterGap = footer.getBoundingClientRect().top - ctaRow.getBoundingClientRect().bottom;
+              ctaFooterGap =
+                footer.getBoundingClientRect().top -
+                ctaRow.getBoundingClientRect().bottom;
+            }
+            if (siteHeader) {
+              const hoursBar = siteHeader.previousElementSibling as HTMLElement | null;
+              const stackBottom = Math.max(
+                siteHeader.getBoundingClientRect().bottom,
+                hoursBar?.getBoundingClientRect().bottom ?? 0,
+              );
+              const safeTop = Math.max(stackBottom, container.top);
+              carBelowHeader = car.top >= safeTop - 6;
+            }
+            const fab = document.querySelector(
+              '[data-testid="whatsapp-fab"]',
+            ) as HTMLElement | null;
+            const pause = section.querySelector(
+              '[data-testid="hero-carousel-pause"]',
+            ) as HTMLElement | null;
+            if (fab && footer && pause) {
+              const fr = fab.getBoundingClientRect();
+              const pr = pause.getBoundingClientRect();
+              const fot = footer.getBoundingClientRect();
+              fabClearsFooter =
+                fr.left > pr.right + 4 ||
+                fr.bottom <= fot.top + 4 ||
+                fr.top >= fot.bottom + 4;
             }
           }
 
@@ -355,8 +400,10 @@ test.describe("Isavel redesign smoke", () => {
             naturalLoaded: naturalW > 0,
             kenBurns,
             withinCeiling,
-            minMediaWhenPossible,
+            mediaToTextGap,
             ctaFooterGap,
+            carBelowHeader,
+            fabClearsFooter,
             mediaHeight: container.height,
           };
         },
@@ -373,20 +420,27 @@ test.describe("Isavel redesign smoke", () => {
         expect(metrics!.naturalLoaded, `slide ${i} img natural`).toBe(true);
         expect(metrics!.kenBurns, `slide ${i} ken burns off`).toBe(false);
         expect(metrics!.withinCeiling, `slide ${i} media height`).toBe(true);
-        expect(
-          metrics!.minMediaWhenPossible,
-          `slide ${i} mídia ≥50svh quando teto permite`,
-        ).toBe(true);
+        expect(metrics!.carBelowHeader, `slide ${i} teto sob header`).toBe(true);
         expect(
           metrics!.carFillVw,
           `slide ${i} car width ≤ bbox na imagem`,
         ).toBeLessThanOrEqual(0.97);
+        if (metrics!.mediaToTextGap != null) {
+          expect(
+            metrics!.mediaToTextGap,
+            `slide ${i} gap mídia–texto`,
+          ).toBeLessThanOrEqual(16);
+        }
         if (metrics!.ctaFooterGap != null) {
           expect(
             metrics!.ctaFooterGap,
             `slide ${i} gap CTA–rodapé`,
-          ).toBeLessThanOrEqual(72);
+          ).toBeLessThanOrEqual(32);
         }
+        expect(
+          metrics!.fabClearsFooter,
+          `slide ${i} WhatsApp vs controles`,
+        ).toBe(true);
       }
       expect(metrics!.overlapText, `slide ${i}`).toBe(false);
     }
