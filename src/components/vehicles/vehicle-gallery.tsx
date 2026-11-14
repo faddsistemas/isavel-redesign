@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { VehiclePhoto } from "@/components/vehicles/vehicle-photo";
 import useEmblaCarousel from "embla-carousel-react";
 import { useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -20,14 +21,13 @@ export function VehicleGallery({ photos, title }: VehicleGalleryProps) {
 
   return (
     <div className="flex flex-col gap-3" data-testid="vehicle-gallery">
-      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-muted" ref={emblaRef}>
-        <Image
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl" ref={emblaRef}>
+        <VehiclePhoto
           src={photos[active] ?? photos[0]}
           alt={`${title} — foto ${active + 1}`}
-          fill
-          className="object-cover"
           priority
           sizes="(max-width: 768px) 100vw, 66vw"
+          padding="sm"
         />
       </div>
       {photos.length > 1 && (
@@ -43,7 +43,7 @@ export function VehicleGallery({ photos, title }: VehicleGalleryProps) {
               )}
               aria-label={`Miniatura ${i + 1}`}
             >
-              <Image src={src} alt="" fill className="object-cover" sizes="64px" />
+              <Image src={src} alt="" fill className="object-contain object-center bg-muted" sizes="64px" />
             </button>
           ))}
         </div>

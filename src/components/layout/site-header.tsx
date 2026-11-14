@@ -3,12 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Menu, Phone, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { HORARIO, PHONE_ABAETE, PHONE_ABAETE_RAW } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { withBasePath } from "@/lib/base-path";
-import { usePathname } from "next/navigation";
 
 const NAV = [
   { href: "/estoque/", label: "Estoque" },
@@ -20,11 +19,9 @@ const NAV = [
 function NavLinks({
   className,
   onNavigate,
-  inverted,
 }: {
   className?: string;
   onNavigate?: () => void;
-  inverted?: boolean;
 }) {
   return (
     <nav
@@ -38,12 +35,7 @@ function NavLinks({
           key={item.href}
           href={item.href}
           onClick={onNavigate}
-          className={cn(
-            "link-underline text-sm font-semibold uppercase tracking-wide transition-colors duration-200",
-            inverted
-              ? "text-white hover:text-white/90"
-              : "text-foreground hover:text-primary",
-          )}
+          className="link-underline text-sm font-semibold uppercase tracking-wide text-foreground transition-colors duration-200 hover:text-primary"
         >
           {item.label}
         </Link>
@@ -54,19 +46,6 @@ function NavLinks({
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const pathname = usePathname();
-  const isHome = pathname === "/" || pathname === "";
-
-  const onScroll = useCallback(() => {
-    setScrolled(window.scrollY > 48);
-  }, []);
-
-  useEffect(() => {
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [onScroll]);
 
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -75,43 +54,35 @@ export function SiteHeader() {
     };
   }, [open]);
 
-  const overlayHeader = isHome && !scrolled;
-
   return (
     <>
-      <TopBar overlay={overlayHeader} />
+      <div className="relative z-50 bg-primary px-4 py-2 text-center text-xs text-primary-foreground sm:text-sm">
+        {HORARIO}
+      </div>
       <header
-        className={cn(
-          "sticky top-0 z-50 w-full border-b transition-[background-color,border-color,box-shadow] duration-[400ms] ease-[cubic-bezier(0.22,1,0.36,1)]",
-          overlayHeader
-            ? "border-white/10 bg-transparent shadow-none"
-            : "border-border bg-white/95 shadow-sm backdrop-blur-md",
-        )}
+        className="sticky top-0 z-50 w-full border-b border-border bg-white/95 shadow-sm backdrop-blur-md"
         style={{ ["--header-offset" as string]: "7.5rem" }}
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/" className="shrink-0">
+          <Link
+            href="/"
+            className="shrink-0 rounded-lg bg-white px-2 py-1 shadow-sm ring-1 ring-border/60"
+          >
             <Image
               src={withBasePath("/assets/logo.png")}
               alt="Isavel Veículos"
               width={180}
               height={46}
-              className={cn(
-                "h-10 w-auto transition duration-300",
-                overlayHeader && "brightness-0 invert",
-              )}
+              className="h-10 w-auto"
               priority
             />
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
-            <NavLinks inverted={overlayHeader} />
+            <NavLinks />
             <a
               href={`tel:${PHONE_ABAETE_RAW}`}
-              className={cn(
-                "flex items-center gap-2 text-sm font-medium transition-colors duration-200",
-                overlayHeader ? "text-white" : "text-primary",
-              )}
+              className="flex items-center gap-2 text-sm font-medium text-primary transition-colors duration-200"
             >
               <Phone className="size-4" aria-hidden />
               {PHONE_ABAETE}
@@ -119,13 +90,9 @@ export function SiteHeader() {
           </div>
 
           <Button
-            variant={overlayHeader ? "secondary" : "outline"}
+            variant="outline"
             size="icon-lg"
-            className={cn(
-              "lg:hidden",
-              overlayHeader &&
-                "border-white/30 bg-white/15 text-white backdrop-blur-md hover:bg-white/25",
-            )}
+            className="lg:hidden"
             aria-label="Abrir menu"
             onClick={() => setOpen(true)}
           >
@@ -182,20 +149,5 @@ export function SiteHeader() {
         </div>
       </div>
     </>
-  );
-}
-
-function TopBar({ overlay }: { overlay: boolean }) {
-  return (
-    <div
-      className={cn(
-        "relative z-50 px-4 py-2 text-center text-xs transition-colors duration-[400ms] sm:text-sm",
-        overlay
-          ? "bg-black/40 text-white/90 backdrop-blur-sm"
-          : "bg-primary text-primary-foreground",
-      )}
-    >
-      {HORARIO}
-    </div>
   );
 }

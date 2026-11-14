@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { VehiclePhoto } from "@/components/vehicles/vehicle-photo";
 import Link from "next/link";
 import { useState } from "react";
 import { MessageCircle } from "lucide-react";
@@ -97,13 +98,12 @@ export function VehiclePreviewModal({
 
         <div className="flex max-h-[90dvh] min-h-0 flex-col overflow-hidden md:grid md:max-h-[90dvh] md:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] md:grid-rows-1">
           <div className="min-w-0 shrink-0 border-border md:flex md:min-h-0 md:flex-col md:justify-center md:border-r md:p-3">
-            <div className="relative mx-auto aspect-[4/3] h-auto max-h-[38dvh] w-full max-w-full overflow-hidden bg-muted md:max-h-[min(45dvh,300px)]">
-              <Image
+            <div className="relative mx-auto aspect-[4/3] h-auto max-h-[38dvh] w-full max-w-full overflow-hidden md:max-h-[min(45dvh,300px)]">
+              <VehiclePhoto
                 src={photos[photoIndex] ?? photos[0]}
                 alt={`${titulo} — foto ${photoIndex + 1}`}
-                fill
-                className="object-cover"
                 sizes="(max-width: 768px) 100vw, 420px"
+                padding="sm"
               />
             </div>
             {photos.length > 1 && (
@@ -124,7 +124,7 @@ export function VehiclePreviewModal({
                         src={src}
                         alt=""
                         fill
-                        className="object-cover"
+                        className="object-contain object-center bg-muted"
                         sizes="56px"
                       />
                     </button>

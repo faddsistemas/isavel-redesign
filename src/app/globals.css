@@ -165,21 +165,22 @@
   }
 }
 
-@keyframes hero-ken-burns {
+@keyframes hero-ken-burns-contain {
   from {
     transform: scale(1);
   }
   to {
-    transform: scale(1.06);
+    transform: scale(1.04);
   }
 }
 
-.hero-ken-burns {
-  animation: hero-ken-burns 9s ease-out forwards;
+.hero-ken-burns-contain {
+  animation: hero-ken-burns-contain 9s ease-out forwards;
+  transform-origin: center center;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-ken-burns {
+  .hero-ken-burns-contain {
     animation: none;
     transform: scale(1);
   }

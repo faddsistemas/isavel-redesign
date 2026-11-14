@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { VehiclePhoto } from "@/components/vehicles/vehicle-photo";
 import { ArrowRight, MapPin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useVehiclePreview } from "@/context/vehicle-preview-context";
@@ -29,13 +29,13 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         className="flex w-full flex-col text-left"
         aria-label={`Abrir prévia de ${titulo}`}
       >
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
-          <Image
+        <div className="relative aspect-[4/3] w-full overflow-hidden">
+          <VehiclePhoto
             src={localCoverPath(vehicle)}
             alt={titulo}
-            fill
-            className="object-cover transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04] motion-reduce:transform-none"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            padding="sm"
+            hoverZoom
           />
           <span
             className="pointer-events-none absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/75 to-transparent"

@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { VehiclePhoto } from "@/components/vehicles/vehicle-photo";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   useCallback,
@@ -123,21 +123,15 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
                   ease: EASE_OUT_PREMIUM,
                 }}
               >
-                <div
-                  className={cn(
-                    "absolute inset-[-4%] size-[108%] origin-center",
-                    !reduceMotion && "hero-ken-burns",
-                  )}
-                >
-                  <Image
-                    src={localCoverPath(v)}
-                    alt={`${v.marca} ${v.modelo}`}
-                    fill
-                    className="object-cover"
-                    priority={v.id === vehicles[0]?.id}
-                    sizes="100vw"
-                  />
-                </div>
+                <VehiclePhoto
+                  src={localCoverPath(v)}
+                  alt={`${v.marca} ${v.modelo}`}
+                  sizes="100vw"
+                  priority={v.id === vehicles[0]?.id}
+                  padding="hero"
+                  kenBurns={!reduceMotion}
+                  className="absolute inset-0"
+                />
               </motion.div>
             ) : null,
           )}
