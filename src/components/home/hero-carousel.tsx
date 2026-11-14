@@ -226,19 +226,20 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
     <section
       ref={sectionRef}
       className={cn(
-        "relative flex w-full flex-col overflow-hidden bg-[#0a1628]",
-        "max-sm:h-auto max-sm:min-h-0",
+        "relative flex w-full flex-col overflow-hidden bg-[#0a1628] max-sm:overflow-x-hidden max-sm:overflow-y-visible",
+        "max-sm:-mt-[var(--header-offset,7.5rem)] max-sm:h-auto max-sm:min-h-0",
         "sm:-mt-[var(--header-offset,7.5rem)] sm:h-[100svh] sm:min-h-[560px]",
       )}
       data-testid="hero-carousel"
       data-active-index={selected}
       data-mobile-media-height={mobileLayout?.mediaHeightPx ?? undefined}
+      data-mobile-header-clearance={mobileLayout?.headerClearancePx ?? undefined}
       aria-roledescription="carrossel"
     >
       <div
         data-testid="hero-mobile-media-wrap"
         className={cn(
-          "relative w-full shrink-0 sm:absolute sm:inset-0 sm:shrink",
+          "relative w-full shrink-0 overflow-visible sm:absolute sm:inset-0 sm:shrink sm:overflow-hidden",
         )}
         style={
           isMobileHero && mobileLayout
@@ -279,7 +280,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         </AnimatePresence>
 
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 hidden h-44 bg-gradient-to-b from-black/50 via-black/15 to-transparent sm:block sm:h-52"
+          className="pointer-events-none absolute inset-x-0 top-0 z-[1] hidden h-52 bg-gradient-to-b from-black/50 via-black/15 to-transparent sm:block"
           aria-hidden
         />
         <div

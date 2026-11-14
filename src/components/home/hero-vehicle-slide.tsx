@@ -76,6 +76,11 @@ export function HeroFullBleedSlide({
         data-hero-soft-edge="true"
         data-hero-framing={heroFramingDataset(framing)}
       >
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-36 bg-gradient-to-b from-black/55 via-black/30 to-transparent"
+          aria-hidden
+          data-testid="hero-mobile-top-scrim"
+        />
         <MotionPad kenBurns={undefined}>
           <Image
             key={src}

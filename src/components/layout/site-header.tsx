@@ -145,12 +145,14 @@ export function SiteHeader() {
           </div>
 
           <Button
-            variant={overHero ? "secondary" : "outline"}
+            variant="outline"
             size="icon-lg"
+            data-testid="header-menu-toggle"
             className={cn(
-              "lg:hidden",
-              overHero &&
-                "border-white/35 bg-white/15 text-white backdrop-blur-md hover:bg-white/25",
+              "lg:hidden shadow-sm",
+              overHero
+                ? "border-white/70 bg-black/45 text-white backdrop-blur-md hover:bg-black/55"
+                : "border-border bg-background text-foreground hover:bg-muted",
             )}
             aria-label="Abrir menu"
             onClick={() => setOpen(true)}

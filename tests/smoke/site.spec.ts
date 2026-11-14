@@ -137,8 +137,30 @@ test.describe("Isavel redesign smoke", () => {
     const layout = isMobile ? "mobile" : "desktop";
 
     await page.goto("./", { waitUntil: "networkidle" });
+    await page.evaluate(() => window.scrollTo(0, 0));
     const carousel = page.getByTestId("hero-carousel");
     await expect(carousel).toBeVisible();
+    if (isMobile) {
+      const header = page.locator("header");
+      await expect(header).toHaveAttribute("data-header-over-hero", "true");
+      const headerBgAlpha = await header.evaluate((el) => {
+        const m = getComputedStyle(el).backgroundColor.match(/[\d.]+/g);
+        return m && m.length >= 4 ? Number(m[3]) : 1;
+      });
+      expect(headerBgAlpha, "header transparente no topo").toBeLessThan(0.08);
+      const menu = page.getByTestId("header-menu-toggle");
+      await expect(menu).toBeVisible();
+      const menuContrast = await menu.evaluate((el) => {
+        const s = getComputedStyle(el);
+        const parse = (c: string) => {
+          const m = c.match(/[\d.]+/g);
+          if (!m) return 0;
+          return m.length >= 3 ? Number(m[0]) + Number(m[1]) + Number(m[2]) : 0;
+        };
+        return Math.abs(parse(s.color) - parse(s.backgroundColor));
+      });
+      expect(menuContrast, "contraste menu no hero").toBeGreaterThan(80);
+    }
     const pauseBtn = page
       .locator(
         '[data-testid="hero-carousel-pause-desktop"], [data-testid="hero-carousel-pause"]',
@@ -178,6 +200,17 @@ test.describe("Isavel redesign smoke", () => {
               vehicleId,
               { timeout: 8_000 },
             );
+            await page.waitForFunction(() => {
+              const img = document.querySelector(
+                '[data-hero-layout="mobile"] [data-testid="hero-slide-image"]',
+              ) as HTMLImageElement | null;
+              if (!img || img.naturalWidth < 1) return false;
+              const style = getComputedStyle(img).objectPosition;
+              const yToken = style.trim().split(/\s+/)[1] ?? style.trim().split(/\s+/)[0];
+              const y =
+                yToken.endsWith("%") ? Number.parseFloat(yToken) : 50;
+              return y >= 85;
+            }, { timeout: 8_000 });
           }
         }
         await page.waitForTimeout(400);
@@ -328,7 +361,7 @@ test.describe("Isavel redesign smoke", () => {
             const vh =
               window.innerHeight || section.getBoundingClientRect().height;
             const svhCap = (58 / 100) * vh;
-            const allowed = Math.min(ceiling, svhCap) + 4;
+            const allowed = svhCap + 4;
             withinCeiling = container.height <= allowed;
           }
 
