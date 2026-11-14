@@ -12,7 +12,7 @@ export function BrandGrid({ marcas }: BrandGridProps) {
       {marcas.map((m) => (
         <li key={m.marca_slug}>
           <Link href={`/estoque/?marca=${m.marca_slug}`}>
-            <Card className="flex min-h-20 flex-col items-center justify-center gap-1 border-border/80 p-3 text-center shadow-none transition hover:border-primary hover:shadow-sm">
+            <Card className="flex min-h-20 flex-col items-center justify-center gap-1 rounded-xl border-border/80 p-3 text-center shadow-none transition-[border-color,box-shadow] duration-200 hover:border-primary hover:shadow-md">
               <span className="text-sm font-bold text-foreground">{m.marca}</span>
               <span className="text-xs text-muted-foreground">
                 {m.count} {m.count === 1 ? "unidade" : "unidades"}

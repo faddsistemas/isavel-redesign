@@ -21,10 +21,10 @@ export function HeroSearch() {
   }
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl border border-border bg-white p-4 shadow-sm sm:p-6">
-      <h1 className="text-xl font-bold text-primary sm:text-2xl">
+    <div className="flex flex-col gap-5 rounded-2xl border border-border/80 bg-white p-6 shadow-lg sm:p-8">
+      <h2 className="text-2xl font-bold text-primary sm:text-3xl">
         Qual veículo você está buscando?
-      </h1>
+      </h2>
       <form onSubmit={onSubmit} className="flex flex-col gap-2 sm:flex-row">
         <Input
           value={termo}

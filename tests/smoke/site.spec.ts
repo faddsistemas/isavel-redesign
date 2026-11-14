@@ -63,6 +63,49 @@ test.describe("Isavel redesign smoke", () => {
     }
   });
 
+  test("home: prefers-reduced-motion mantém hero e conteúdo visíveis", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.goto("./", { waitUntil: "networkidle" });
+    await expect(page.getByTestId("hero-carousel")).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId("hero-search-input")).toBeVisible();
+
+    const heroHeading = page.getByRole("heading", { level: 1 });
+    await expect(heroHeading).toBeVisible();
+    const heroOpacity = await heroHeading.evaluate((el) => {
+      let node: HTMLElement | null = el;
+      while (node) {
+        const opacity = Number.parseFloat(getComputedStyle(node).opacity);
+        if (opacity < 0.99) return opacity;
+        node = node.parentElement;
+      }
+      return 1;
+    });
+    expect(heroOpacity).toBeGreaterThanOrEqual(0.99);
+
+    await page.evaluate(() =>
+      window.scrollTo(0, document.documentElement.scrollHeight),
+    );
+    await page.waitForTimeout(300);
+
+    const destaques = page.getByRole("heading", {
+      name: "Destaques",
+      exact: true,
+    });
+    await expect(destaques).toBeVisible();
+    const sectionOpacity = await destaques.evaluate((el) => {
+      let node: HTMLElement | null = el;
+      while (node) {
+        const opacity = Number.parseFloat(getComputedStyle(node).opacity);
+        if (opacity < 0.99) return opacity;
+        node = node.parentElement;
+      }
+      return 1;
+    });
+    expect(sectionOpacity).toBeGreaterThanOrEqual(0.99);
+  });
+
   test("home carrega sem overflow e sem erros no console", async ({ page }) => {
     const errors: string[] = [];
     page.on("console", (msg) => {
