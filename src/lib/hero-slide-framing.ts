@@ -49,7 +49,7 @@ function frame(
     },
     mobile: {
       objectPosition: focal,
-      bandSvh: 63,
+      bandSvh: 65,
       kenBurnsScale: 1,
       ...partial.mobile,
     },

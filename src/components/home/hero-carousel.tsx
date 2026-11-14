@@ -151,7 +151,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
       </div>
 
       <div
-        className="relative z-10 mt-auto flex w-full flex-col justify-end px-4 pb-[5.5rem] pt-8 max-sm:absolute max-sm:inset-x-0 max-sm:top-[58svh] max-sm:mt-0 max-sm:justify-end max-sm:pb-28 max-sm:pt-2 sm:px-8 sm:pb-20 sm:pt-24"
+        className="relative z-10 mt-auto flex w-full flex-col justify-end px-4 pb-[5.5rem] pt-8 max-sm:absolute max-sm:inset-x-0 max-sm:top-[50svh] max-sm:mt-0 max-sm:justify-end max-sm:pb-24 max-sm:pt-0 sm:px-8 sm:pb-20 sm:pt-24"
         data-testid="hero-slide-copy"
       >
         <div
