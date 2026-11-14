@@ -48,6 +48,16 @@ function measureSvhPx(): number {
   return px || window.innerHeight;
 }
 
+function readMobileHeroImageNatural(
+  section: HTMLElement,
+): { width: number; height: number } | null {
+  const img = section.querySelector(
+    '[data-hero-layout="mobile"] [data-testid="hero-slide-image"]',
+  ) as HTMLImageElement | null;
+  if (!img || img.naturalWidth < 1 || img.naturalHeight < 1) return null;
+  return { width: img.naturalWidth, height: img.naturalHeight };
+}
+
 export function HeroCarousel({ vehicles }: HeroCarouselProps) {
   const { openPreview } = useVehiclePreview();
   const reduceMotion = useReducedMotion();
@@ -114,66 +124,70 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
   const current = vehicles[selected];
   const framing = current ? getHeroSlideFraming(current) : null;
 
+  const applyMobileLayout = useCallback(
+    (fr: NonNullable<typeof framing>, naturalW: number, naturalH: number) => {
+      const svhPx = measureSvhPx();
+      const vw = window.innerWidth;
+      const layout = computeMobileHeroMediaLayout(
+        vw,
+        svhPx,
+        naturalW,
+        naturalH,
+        fr.carBbox,
+      );
+      setMobileLayout({
+        mediaHeightPx: layout.mediaHeightPx,
+        objectPosition: layout.objectPosition,
+      });
+      document.documentElement.style.setProperty(
+        "--hero-mobile-media-h",
+        `${layout.mediaHeightPx}px`,
+      );
+    },
+    [],
+  );
+
   useLayoutEffect(() => {
+    let loadCleanup: (() => void) | undefined;
+
     const update = () => {
+      loadCleanup?.();
+      loadCleanup = undefined;
+
       if (window.innerWidth >= 768 || !framing) {
         setMobileLayout(null);
         document.documentElement.style.removeProperty("--hero-mobile-media-h");
         return;
       }
-      const svhPx = measureSvhPx();
-      const vw = window.innerWidth;
-      const chromeEstimate = 300;
-      let layout = computeMobileHeroMediaLayout(vw, svhPx, framing.imageAspect, framing.carBbox, {
-        maxMediaPx: svhPx - chromeEstimate,
-      });
 
       const section = sectionRef.current;
-      if (section) {
-        const copy = section.querySelector('[data-testid="hero-slide-copy"]');
-        const footer = section.querySelector('[data-testid="hero-mobile-footer"]');
-        const copyH = copy?.getBoundingClientRect().height ?? 0;
-        const footerH = footer?.getBoundingClientRect().height ?? 0;
-        const chrome = copyH + footerH + 16;
-        layout = computeMobileHeroMediaLayout(vw, svhPx, framing.imageAspect, framing.carBbox, {
-          maxMediaPx: svhPx - chrome,
-        });
-      }
+      const natural = section ? readMobileHeroImageNatural(section) : null;
+      const naturalW = natural?.width ?? framing.imageNaturalWidth;
+      const naturalH = natural?.height ?? framing.imageNaturalHeight;
+      applyMobileLayout(framing, naturalW, naturalH);
 
-      const apply = (next: typeof layout) => {
-        setMobileLayout(next);
-        document.documentElement.style.setProperty(
-          "--hero-mobile-media-h",
-          `${next.mediaHeightPx}px`,
-        );
-      };
-      apply(layout);
-
-      requestAnimationFrame(() => {
-        if (window.innerWidth >= 768 || !framing) return;
-        const el = sectionRef.current;
-        if (!el) return;
-        const copy = el.querySelector('[data-testid="hero-slide-copy"]');
-        const footer = el.querySelector('[data-testid="hero-mobile-footer"]');
-        const copyH = copy?.getBoundingClientRect().height ?? 190;
-        const footerH = footer?.getBoundingClientRect().height ?? 96;
-        const chrome = copyH + footerH + 12;
-        const refined = computeMobileHeroMediaLayout(
-          vw,
-          svhPx,
-          framing.imageAspect,
-          framing.carBbox,
-          { maxMediaPx: svhPx - chrome },
-        );
-        if (refined.mediaHeightPx !== layout.mediaHeightPx) {
-          apply(refined);
+      if (!natural && section) {
+        const img = section.querySelector(
+          '[data-hero-layout="mobile"] [data-testid="hero-slide-image"]',
+        ) as HTMLImageElement | null;
+        if (img && !img.complete) {
+          const onLoad = () => {
+            const n = readMobileHeroImageNatural(section);
+            if (n && framing) applyMobileLayout(framing, n.width, n.height);
+          };
+          img.addEventListener("load", onLoad, { once: true });
+          loadCleanup = () => img.removeEventListener("load", onLoad);
         }
-      });
+      }
     };
+
     update();
     window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, [selected, framing]);
+    return () => {
+      window.removeEventListener("resize", update);
+      loadCleanup?.();
+    };
+  }, [selected, framing, applyMobileLayout]);
 
   const openSlide = useCallback(
     (v: Veiculo) => {
@@ -244,7 +258,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
       </div>
 
       <div
-        className="relative z-10 shrink-0 px-4 pt-3 pb-2 sm:mt-auto sm:flex sm:w-full sm:flex-col sm:justify-end sm:px-8 sm:pb-20 sm:pt-24"
+        className="relative z-10 flex min-h-0 flex-1 flex-col justify-center px-4 py-2 sm:mt-auto sm:flex-none sm:justify-end sm:px-8 sm:pb-20 sm:pt-24"
         data-testid="hero-slide-copy"
       >
         <div
@@ -326,45 +340,61 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
 
       <div
         data-testid="hero-mobile-footer"
-        className="relative z-20 mt-auto flex flex-col items-center gap-0.5 pb-5 pt-1 sm:absolute sm:bottom-6 sm:left-1/2 sm:mt-0 sm:-translate-x-1/2 sm:translate-y-12 sm:pb-0 sm:pt-0"
+        className="relative z-20 mt-auto shrink-0 px-3 pb-5 sm:absolute sm:bottom-6 sm:left-1/2 sm:mt-0 sm:-translate-x-1/2 sm:translate-y-12 sm:px-0 sm:pb-0"
       >
-        <motion.button
-          type="button"
-          className="flex flex-col items-center gap-1 text-white/80 transition-colors duration-200 hover:text-white sm:hidden"
-          aria-label="Rolar para o conteúdo"
-          onClick={() => {
-            document.getElementById("busca-veiculo")?.scrollIntoView({
-              behavior: reduceMotion ? "auto" : "smooth",
-            });
-          }}
-          animate={reduceMotion ? undefined : { y: [0, 6, 0] }}
-          transition={
-            reduceMotion
-              ? undefined
-              : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
-          }
-        >
-          <ArrowDown className="size-5" aria-hidden />
-        </motion.button>
+        <div className="grid w-full max-w-md grid-cols-[auto_1fr_auto] items-center gap-2 sm:flex sm:justify-center">
+          <Button
+            type="button"
+            variant="secondary"
+            size="icon-lg"
+            className="size-11 min-h-11 min-w-11 shrink-0 rounded-full border-white/20 bg-white/15 text-white backdrop-blur-md transition-colors duration-200 hover:bg-white/25 hover:text-white sm:hidden"
+            aria-label={paused ? "Retomar carrossel" : "Pausar carrossel"}
+            data-testid="hero-carousel-pause"
+            onClick={() => setPaused((p) => !p)}
+          >
+            {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
+          </Button>
 
-        <div className="flex justify-center gap-1">
-          {vehicles.map((v, i) => (
-            <button
-              key={v.id}
-              type="button"
-              aria-label={`Slide ${i + 1}`}
-              data-testid={`hero-carousel-dot-${i}`}
-              onClick={(e) => goToDot(e, i)}
-              className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full"
-            >
-              <span
-                className={cn(
-                  "size-2.5 rounded-full transition-colors duration-200",
-                  i === selected ? "bg-white" : "bg-white/40",
-                )}
-              />
-            </button>
-          ))}
+          <motion.button
+            type="button"
+            className="col-span-3 flex flex-col items-center gap-1 text-white/80 transition-colors duration-200 hover:text-white sm:col-span-1 sm:hidden"
+            aria-label="Rolar para o conteúdo"
+            onClick={() => {
+              document.getElementById("busca-veiculo")?.scrollIntoView({
+                behavior: reduceMotion ? "auto" : "smooth",
+              });
+            }}
+            animate={reduceMotion ? undefined : { y: [0, 6, 0] }}
+            transition={
+              reduceMotion
+                ? undefined
+                : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
+            }
+          >
+            <ArrowDown className="size-5" aria-hidden />
+          </motion.button>
+
+          <div className="col-start-2 flex justify-center gap-0.5">
+            {vehicles.map((v, i) => (
+              <button
+                key={v.id}
+                type="button"
+                aria-label={`Slide ${i + 1}`}
+                data-testid={`hero-carousel-dot-${i}`}
+                onClick={(e) => goToDot(e, i)}
+                className="flex size-11 min-h-11 min-w-11 items-center justify-center rounded-full"
+              >
+                <span
+                  className={cn(
+                    "size-2.5 rounded-full transition-colors duration-200",
+                    i === selected ? "bg-white" : "bg-white/40",
+                  )}
+                />
+              </button>
+            ))}
+          </div>
+
+          <span className="size-11 sm:hidden" aria-hidden />
         </div>
       </div>
 
@@ -372,9 +402,9 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
         type="button"
         variant="secondary"
         size="icon-lg"
-        className="absolute bottom-5 left-4 z-20 size-11 min-h-11 min-w-11 rounded-full border-white/20 bg-white/15 text-white backdrop-blur-md transition-colors duration-200 hover:bg-white/25 hover:text-white sm:right-8 sm:bottom-6 sm:left-auto"
+        className="absolute right-4 bottom-6 z-20 hidden size-11 min-h-11 min-w-11 rounded-full border-white/20 bg-white/15 text-white backdrop-blur-md transition-colors duration-200 hover:bg-white/25 hover:text-white sm:inline-flex sm:right-8"
         aria-label={paused ? "Retomar carrossel" : "Pausar carrossel"}
-        data-testid="hero-carousel-pause"
+        data-testid="hero-carousel-pause-desktop"
         onClick={() => setPaused((p) => !p)}
       >
         {paused ? <Play className="size-5" /> : <Pause className="size-5" />}

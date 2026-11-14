@@ -139,7 +139,18 @@ test.describe("Isavel redesign smoke", () => {
     await page.goto("./", { waitUntil: "networkidle" });
     const carousel = page.getByTestId("hero-carousel");
     await expect(carousel).toBeVisible();
-    await page.getByTestId("hero-carousel-pause").click();
+    const pauseBtn = page
+      .locator(
+        '[data-testid="hero-carousel-pause-desktop"], [data-testid="hero-carousel-pause"]',
+      )
+      .locator("visible=true")
+      .first();
+    await pauseBtn.click();
+    if (isMobile) {
+      await expect(carousel).toHaveAttribute("data-mobile-media-height", /^\d+$/, {
+        timeout: 10_000,
+      });
+    }
     const slideCount = await page.getByTestId(/^hero-carousel-dot-/).count();
 
     for (let i = 0; i < slideCount; i++) {
@@ -211,8 +222,12 @@ test.describe("Isavel redesign smoke", () => {
           const dataset = media.getAttribute("data-hero-framing");
           if (!dataset) return null;
           const [aspectStr, bboxStr, desktopPos, mobilePos] = dataset.split("|");
-          const imageAspect = Number.parseFloat(aspectStr);
+          const fallbackAspect = Number.parseFloat(aspectStr);
           const [bl, bt, br, bb] = bboxStr.split(",").map(Number);
+          const naturalW = img.naturalWidth > 0 ? img.naturalWidth : 0;
+          const naturalH = img.naturalHeight > 0 ? img.naturalHeight : 0;
+          const imageAspect =
+            naturalW > 0 && naturalH > 0 ? naturalW / naturalH : fallbackAspect;
           const objectPosition =
             layoutName === "desktop"
               ? desktopPos
@@ -225,6 +240,10 @@ test.describe("Isavel redesign smoke", () => {
           const maskImage =
             getComputedStyle(layoutEl).maskImage ||
             getComputedStyle(layoutEl).webkitMaskImage;
+
+          const kenBurns = Boolean(
+            layoutEl.querySelector(".hero-ken-burns-contain-max"),
+          );
 
           const local = objectCoverImageRect(
             { width: container.width, height: container.height },
@@ -255,11 +274,12 @@ test.describe("Isavel redesign smoke", () => {
                   bottom: container.bottom,
                 };
 
+          const tol = 1;
           const inside =
-            car.left >= visible.left - 3 &&
-            car.top >= visible.top - 3 &&
-            car.right <= visible.right + 3 &&
-            car.bottom <= visible.bottom + 3;
+            car.left >= visible.left - tol &&
+            car.top >= visible.top - tol &&
+            car.right <= visible.right + tol &&
+            car.bottom <= visible.bottom + tol;
 
           const overlapText = !(
             car.right <= text.left + 6 ||
@@ -274,6 +294,17 @@ test.describe("Isavel redesign smoke", () => {
           const carFillVw =
             layoutName === "mobile" ? carWidth / container.width : null;
 
+          let withinCeiling = true;
+          if (layoutName === "mobile" && naturalW > 0 && naturalH > 0) {
+            const bboxW_px = (br - bl) * naturalW;
+            const ceiling =
+              (naturalH * (container.width * 0.96)) / bboxW_px;
+            const svhCap =
+              (58 / 100) * section.getBoundingClientRect().height;
+            const allowed = Math.min(ceiling, svhCap) + 4;
+            withinCeiling = container.height <= allowed;
+          }
+
           return {
             imgFit: getComputedStyle(img).objectFit,
             hasBlurPanel: Boolean(
@@ -287,6 +318,10 @@ test.describe("Isavel redesign smoke", () => {
             inside,
             overlapText,
             carFillVw,
+            naturalLoaded: naturalW > 0,
+            kenBurns,
+            withinCeiling,
+            mediaHeight: container.height,
           };
         },
         { index: i, layoutName: layout },
@@ -299,7 +334,13 @@ test.describe("Isavel redesign smoke", () => {
       expect(metrics!.mediaFullWidth).toBe(true);
       expect(metrics!.inside).toBe(true);
       if (isMobile) {
-        expect(metrics!.carFillVw, `slide ${i} car width`).toBeGreaterThan(0.9);
+        expect(metrics!.naturalLoaded, `slide ${i} img natural`).toBe(true);
+        expect(metrics!.kenBurns, `slide ${i} ken burns off`).toBe(false);
+        expect(metrics!.withinCeiling, `slide ${i} media height`).toBe(true);
+        expect(
+          metrics!.carFillVw,
+          `slide ${i} car width ≤ bbox na imagem`,
+        ).toBeLessThanOrEqual(0.97);
       }
       expect(metrics!.overlapText, `slide ${i}`).toBe(false);
     }

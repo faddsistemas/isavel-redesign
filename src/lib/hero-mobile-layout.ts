@@ -7,108 +7,70 @@ import {
 import { bboxFocalPosition } from "@/lib/hero-slide-framing";
 
 const BBOX_VW = 0.96;
-const BREATHING = 1.3;
 const MAX_MEDIA_SVH = 58;
 
 export interface MobileHeroMediaLayout {
   mediaHeightPx: number;
   objectPosition: string;
+  /** Teto rígido (boxH máximo com cover sem cortar largura do bbox). */
+  ceilingHeightPx: number;
 }
 
-export interface MobileHeroLayoutOptions {
-  /** Altura máxima da mídia (ex.: 100svh menos copy/controles). */
-  maxMediaPx?: number;
+/** Cover: s = max(boxW/imgW, boxH/imgH). Com regime altura, s*bboxW_px <= boxW*0.96 ⇒ boxH <= imgH*(boxW*0.96)/bboxW_px. */
+export function mobileCoverWidthCeilingPx(
+  boxW: number,
+  imageNaturalWidth: number,
+  imageNaturalHeight: number,
+  bbox: NormalizedBbox,
+): number {
+  const bboxW_px = Math.max(bbox.r - bbox.l, 0.05) * imageNaturalWidth;
+  return (imageNaturalHeight * (boxW * BBOX_VW)) / bboxW_px;
 }
 
-function bboxFitsCover(
-  viewportWidth: number,
-  mediaHeightPx: number,
-  imageAspect: number,
+export function bboxFitsInMobileCover(
+  boxW: number,
+  boxH: number,
+  imageNaturalWidth: number,
+  imageNaturalHeight: number,
   bbox: NormalizedBbox,
   objectPosition: string,
+  tolerance = 1,
 ): boolean {
+  const imageAspect = imageNaturalWidth / imageNaturalHeight;
   const imageRect = objectCoverImageRect(
-    { width: viewportWidth, height: mediaHeightPx },
+    { width: boxW, height: boxH },
     imageAspect,
     objectPosition,
   );
   const car = bboxToScreenRect(bbox, imageRect);
   return rectInside(
     car,
-    { left: 0, top: 0, right: viewportWidth, bottom: mediaHeightPx },
-    3,
+    { left: 0, top: 0, right: boxW, bottom: boxH },
+    tolerance,
   );
 }
 
-function maxHeightWithFullBbox(
-  viewportWidth: number,
-  imageAspect: number,
-  bbox: NormalizedBbox,
-  objectPosition: string,
-  minH: number,
-  maxH: number,
-): number {
-  let lo = minH;
-  let hi = maxH;
-  if (!bboxFitsCover(viewportWidth, hi, imageAspect, bbox, objectPosition)) {
-    while (hi - lo > 2) {
-      const mid = (lo + hi) / 2;
-      if (bboxFitsCover(viewportWidth, mid, imageAspect, bbox, objectPosition)) {
-        lo = mid;
-      } else {
-        hi = mid;
-      }
-    }
-    return lo;
-  }
-  return hi;
-}
-
-/** Altura da mídia mobile: bbox ~96vw de largura, carro inteiro visível, preenche o hero sem vão. */
+/** Altura da mídia mobile: nunca acima do teto rígido de largura do bbox. */
 export function computeMobileHeroMediaLayout(
   viewportWidth: number,
   svhPx: number,
-  imageAspect: number,
+  imageNaturalWidth: number,
+  imageNaturalHeight: number,
   bbox: NormalizedBbox,
-  options: MobileHeroLayoutOptions = {},
 ): MobileHeroMediaLayout {
   const objectPosition = bboxFocalPosition(bbox);
-  const bboxW = Math.max(bbox.r - bbox.l, 0.08);
-  const bboxH = Math.max(bbox.b - bbox.t, 0.08);
-
-  const widthTargetH = (BBOX_VW * viewportWidth) / (bboxW * imageAspect);
-  const idealH = widthTargetH * bboxH * BREATHING;
+  const ceilingHeightPx = mobileCoverWidthCeilingPx(
+    viewportWidth,
+    imageNaturalWidth,
+    imageNaturalHeight,
+    bbox,
+  );
   const capSvh = (MAX_MEDIA_SVH / 100) * svhPx;
-  const maxMedia =
-    options.maxMediaPx != null
-      ? Math.min(options.maxMediaPx, capSvh)
-      : capSvh;
-
-  let mediaHeightPx = Math.min(idealH, maxMedia);
-  if (!bboxFitsCover(viewportWidth, mediaHeightPx, imageAspect, bbox, objectPosition)) {
-    mediaHeightPx = maxHeightWithFullBbox(
-      viewportWidth,
-      imageAspect,
-      bbox,
-      objectPosition,
-      mediaHeightPx,
-      Math.max(idealH, maxMedia) * 1.2,
-    );
-  }
-
-  if (mediaHeightPx < maxMedia) {
-    mediaHeightPx = maxHeightWithFullBbox(
-      viewportWidth,
-      imageAspect,
-      bbox,
-      objectPosition,
-      mediaHeightPx,
-      maxMedia,
-    );
-  }
+  const mediaHeightPx = Math.min(ceilingHeightPx, capSvh);
 
   return {
     mediaHeightPx: Math.round(mediaHeightPx),
     objectPosition,
+    ceilingHeightPx,
   };
 }
