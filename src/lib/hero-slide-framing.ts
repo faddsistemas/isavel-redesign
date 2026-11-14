@@ -7,6 +7,8 @@ export interface HeroSlideFraming {
   photoIndex: number;
   /** Proporção largura/altura do arquivo (ex.: 1920/1440). */
   imageAspect: number;
+  imageNaturalWidth: number;
+  imageNaturalHeight: number;
   /** Região aproximada do carro na foto, coordenadas 0–1. */
   carBbox: NormalizedBbox;
   desktop: {
@@ -29,18 +31,32 @@ export function bboxFocalPosition(bbox: NormalizedBbox): string {
   return `${x.toFixed(1)}% ${y.toFixed(1)}%`;
 }
 
-const ASPECT_1920 = 1920 / 1440;
-const ASPECT_1290 = 1290 / 966;
+const NATURAL_1920 = { imageNaturalWidth: 1920, imageNaturalHeight: 1440 };
+const NATURAL_1290 = { imageNaturalWidth: 1290, imageNaturalHeight: 966 };
+const ASPECT_1920 = NATURAL_1920.imageNaturalWidth / NATURAL_1920.imageNaturalHeight;
+const ASPECT_1290 = NATURAL_1290.imageNaturalWidth / NATURAL_1290.imageNaturalHeight;
 
 function frame(
-  partial: Omit<HeroSlideFraming, "desktop" | "mobile"> & {
+  partial: Omit<HeroSlideFraming, "desktop" | "mobile" | "imageAspect" | "imageNaturalWidth" | "imageNaturalHeight"> & {
+    imageAspect?: number;
+    imageNaturalWidth?: number;
+    imageNaturalHeight?: number;
     desktop?: Partial<HeroSlideFraming["desktop"]>;
     mobile?: Partial<HeroSlideFraming["mobile"]>;
   },
 ): HeroSlideFraming {
   const focal = bboxFocalPosition(partial.carBbox);
+  const dims =
+    partial.imageNaturalWidth != null && partial.imageNaturalHeight != null
+      ? {
+          imageNaturalWidth: partial.imageNaturalWidth,
+          imageNaturalHeight: partial.imageNaturalHeight,
+          imageAspect: partial.imageNaturalWidth / partial.imageNaturalHeight,
+        }
+      : { ...NATURAL_1920, imageAspect: ASPECT_1920 };
   return {
     ...partial,
+    ...dims,
     desktop: {
       objectPosition: focal,
       panelStart: 0.32,
@@ -59,36 +75,32 @@ function frame(
 const BY_ID: Record<number, HeroSlideFraming> = {
   1024455: frame({
     photoIndex: 2,
-    imageAspect: ASPECT_1920,
-    carBbox: { l: 0.05, t: 0.16, r: 0.94, b: 0.8 },
+    carBbox: { l: 0.08, t: 0.2, r: 0.86, b: 0.82 },
   }),
   1160040: frame({
     photoIndex: 2,
-    imageAspect: ASPECT_1920,
-    carBbox: { l: 0.05, t: 0.16, r: 0.94, b: 0.8 },
+    carBbox: { l: 0.08, t: 0.2, r: 0.86, b: 0.82 },
   }),
   1029170: frame({
     photoIndex: 2,
-    imageAspect: ASPECT_1920,
-    carBbox: { l: 0.08, t: 0.14, r: 0.93, b: 0.82 },
+    carBbox: { l: 0.08, t: 0.16, r: 0.9, b: 0.82 },
     desktop: { panelStart: 0.3 },
   }),
   1056873: frame({
     photoIndex: 2,
-    imageAspect: ASPECT_1920,
-    carBbox: { l: 0.06, t: 0.13, r: 0.92, b: 0.84 },
+    carBbox: { l: 0.1, t: 0.18, r: 0.88, b: 0.8 },
     desktop: { panelStart: 0.3 },
   }),
   1004365: frame({
     photoIndex: 2,
-    imageAspect: ASPECT_1290,
-    carBbox: { l: 0.07, t: 0.12, r: 0.9, b: 0.83 },
+    ...NATURAL_1290,
+    carBbox: { l: 0.08, t: 0.15, r: 0.88, b: 0.88 },
     desktop: { panelStart: 0.34 },
   }),
   1161984: frame({
     photoIndex: 5,
-    imageAspect: ASPECT_1290,
-    carBbox: { l: 0.06, t: 0.1, r: 0.88, b: 0.82 },
+    ...NATURAL_1290,
+    carBbox: { l: 0.08, t: 0.14, r: 0.86, b: 0.87 },
     desktop: { panelStart: 0.34 },
   }),
 };
@@ -102,7 +114,6 @@ const BY_MODEL: Record<string, HeroSlideFraming> = {
 
 const DEFAULT: HeroSlideFraming = frame({
   photoIndex: 0,
-  imageAspect: ASPECT_1920,
   carBbox: { l: 0.08, t: 0.12, r: 0.92, b: 0.88 },
   desktop: { kenBurnsScale: 1.02, panelStart: 0.32 },
 });

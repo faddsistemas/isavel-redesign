@@ -10,9 +10,11 @@ interface HeroFullBleedSlideProps {
   priority?: boolean;
   framing: HeroSlideFraming;
   kenBurns?: boolean;
+  mobileMediaHeightPx?: number;
+  mobileObjectPosition?: string;
 }
 
-/** Cover com máscara suave (Porsche): carro inteiro, sem bordas duras. */
+/** Desktop inalterado (sm+). Mobile: cover dimensionado pelo carBbox. */
 export function HeroFullBleedSlide({
   src,
   alt,
@@ -20,16 +22,23 @@ export function HeroFullBleedSlide({
   priority,
   framing,
   kenBurns,
+  mobileMediaHeightPx,
+  mobileObjectPosition,
 }: HeroFullBleedSlideProps) {
   const desktopKen =
     kenBurns && framing.desktop.kenBurnsScale > 1
       ? "hero-ken-burns-contain-max motion-reduce:transform-none"
       : undefined;
   const desktopPanelStart = `${framing.desktop.panelStart * 100}%`;
+  const mobilePos = mobileObjectPosition ?? framing.mobile.objectPosition;
+  const mobileHeight =
+    mobileMediaHeightPx != null
+      ? `${mobileMediaHeightPx}px`
+      : "var(--hero-mobile-media-h, 52svh)";
 
   return (
     <div
-      className="absolute inset-0 bg-[#0a1628]"
+      className="relative h-full w-full bg-[#0a1628] sm:absolute sm:inset-0"
       data-testid="hero-slide-media"
       data-hero-framing={heroFramingDataset(framing)}
     >
@@ -58,10 +67,11 @@ export function HeroFullBleedSlide({
       </div>
 
       <div
-        className="hero-photo-pane-mobile absolute inset-x-0 top-0 sm:hidden"
-        style={{ height: `${framing.mobile.bandSvh}svh` }}
+        className="hero-photo-pane-mobile absolute inset-x-0 top-0 w-full sm:hidden"
+        style={{ height: mobileHeight }}
         data-hero-layout="mobile"
         data-hero-soft-edge="true"
+        data-mobile-media-height={mobileMediaHeightPx}
       >
         <MotionPad kenBurns={undefined}>
           <Image
@@ -72,11 +82,11 @@ export function HeroFullBleedSlide({
             priority={priority}
             data-testid="hero-slide-image"
             className="object-cover"
-            style={{ objectPosition: framing.mobile.objectPosition }}
+            style={{ objectPosition: mobilePos }}
           />
         </MotionPad>
         <div
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-b from-transparent via-[#0a1628]/40 to-[#0a1628]"
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-[#0a1628]"
           aria-hidden
         />
       </div>
