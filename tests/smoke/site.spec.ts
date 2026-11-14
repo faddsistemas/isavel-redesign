@@ -213,7 +213,10 @@ test.describe("Isavel redesign smoke", () => {
           const [aspectStr, bboxStr, desktopPos, mobilePos] = dataset.split("|");
           const imageAspect = Number.parseFloat(aspectStr);
           const [bl, bt, br, bb] = bboxStr.split(",").map(Number);
-          const objectPosition = layoutName === "desktop" ? desktopPos : mobilePos;
+          const objectPosition =
+            layoutName === "desktop"
+              ? desktopPos
+              : getComputedStyle(img).objectPosition || mobilePos;
 
           const container = layoutEl.getBoundingClientRect();
           const hero = section.getBoundingClientRect();
@@ -267,6 +270,10 @@ test.describe("Isavel redesign smoke", () => {
 
           const mediaBox = media.getBoundingClientRect();
 
+          const carWidth = car.right - car.left;
+          const carFillVw =
+            layoutName === "mobile" ? carWidth / container.width : null;
+
           return {
             imgFit: getComputedStyle(img).objectFit,
             hasBlurPanel: Boolean(
@@ -279,6 +286,7 @@ test.describe("Isavel redesign smoke", () => {
                 : container.width >= hero.width * 0.98,
             inside,
             overlapText,
+            carFillVw,
           };
         },
         { index: i, layoutName: layout },
@@ -290,6 +298,9 @@ test.describe("Isavel redesign smoke", () => {
       expect(metrics!.softEdge).toBe(true);
       expect(metrics!.mediaFullWidth).toBe(true);
       expect(metrics!.inside).toBe(true);
+      if (isMobile) {
+        expect(metrics!.carFillVw, `slide ${i} car width`).toBeGreaterThan(0.9);
+      }
       expect(metrics!.overlapText, `slide ${i}`).toBe(false);
     }
   });

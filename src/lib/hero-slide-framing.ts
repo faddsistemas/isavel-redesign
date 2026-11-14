@@ -60,35 +60,35 @@ const BY_ID: Record<number, HeroSlideFraming> = {
   1024455: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
-    carBbox: { l: 0.05, t: 0.16, r: 0.94, b: 0.8 },
+    carBbox: { l: 0.01, t: 0.13, r: 0.99, b: 0.83 },
   }),
   1160040: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
-    carBbox: { l: 0.05, t: 0.16, r: 0.94, b: 0.8 },
+    carBbox: { l: 0.01, t: 0.13, r: 0.99, b: 0.83 },
   }),
   1029170: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
-    carBbox: { l: 0.08, t: 0.14, r: 0.93, b: 0.82 },
+    carBbox: { l: 0.01, t: 0.11, r: 0.99, b: 0.85 },
     desktop: { panelStart: 0.3 },
   }),
   1056873: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1920,
-    carBbox: { l: 0.06, t: 0.13, r: 0.92, b: 0.84 },
+    carBbox: { l: 0.02, t: 0.11, r: 0.98, b: 0.85 },
     desktop: { panelStart: 0.3 },
   }),
   1004365: frame({
     photoIndex: 2,
     imageAspect: ASPECT_1290,
-    carBbox: { l: 0.07, t: 0.12, r: 0.9, b: 0.83 },
+    carBbox: { l: 0.03, t: 0.1, r: 0.97, b: 0.84 },
     desktop: { panelStart: 0.34 },
   }),
   1161984: frame({
     photoIndex: 5,
     imageAspect: ASPECT_1290,
-    carBbox: { l: 0.06, t: 0.1, r: 0.88, b: 0.82 },
+    carBbox: { l: 0.03, t: 0.08, r: 0.97, b: 0.84 },
     desktop: { panelStart: 0.34 },
   }),
 };
