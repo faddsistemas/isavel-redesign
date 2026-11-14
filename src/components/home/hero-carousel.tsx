@@ -4,6 +4,7 @@ import { HeroFullBleedSlide } from "@/components/home/hero-vehicle-slide";
 import {
   getHeroSlideFraming,
   heroSlideImagePath,
+  heroSlideMobileImagePath,
 } from "@/lib/hero-slide-framing";
 import { computeMobileHeroMediaLayout } from "@/lib/hero-mobile-layout";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
@@ -11,6 +12,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type MouseEvent,
@@ -65,9 +67,12 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
   const [paused, setPaused] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const sectionRef = useRef<HTMLElement | null>(null);
-  const [mobileLayout, setMobileLayout] = useState<{
-    mediaHeightPx: number;
-    objectPosition: string;
+  const [mobileViewportTick, setMobileViewportTick] = useState(0);
+  const [isMobileHero, setIsMobileHero] = useState(false);
+  const [loadedNatural, setLoadedNatural] = useState<{
+    slide: number;
+    w: number;
+    h: number;
   } | null>(null);
 
   const count = vehicles.length;
@@ -124,70 +129,104 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
   const current = vehicles[selected];
   const framing = current ? getHeroSlideFraming(current) : null;
 
-  const applyMobileLayout = useCallback(
-    (fr: NonNullable<typeof framing>, naturalW: number, naturalH: number) => {
-      const svhPx = measureSvhPx();
-      const vw = window.innerWidth;
-      const layout = computeMobileHeroMediaLayout(
-        vw,
-        svhPx,
-        naturalW,
-        naturalH,
-        fr.carBbox,
-      );
-      setMobileLayout({
-        mediaHeightPx: layout.mediaHeightPx,
-        objectPosition: layout.objectPosition,
-      });
-      document.documentElement.style.setProperty(
-        "--hero-mobile-media-h",
-        `${layout.mediaHeightPx}px`,
-      );
-    },
-    [],
-  );
+  const mobileLayout = useMemo(() => {
+    if (!isMobileHero || !framing) return null;
+    void mobileViewportTick;
+    const m = framing.mobileHero;
+    const naturalMatchesMobileAsset = (w: number, h: number) =>
+      Math.abs(w - m.imageNaturalWidth) / m.imageNaturalWidth < 0.04 &&
+      Math.abs(h - m.imageNaturalHeight) / m.imageNaturalHeight < 0.04;
+
+    const naturalFromImage =
+      loadedNatural?.slide === selected &&
+      naturalMatchesMobileAsset(loadedNatural.w, loadedNatural.h)
+        ? loadedNatural
+        : null;
+    const naturalW = naturalFromImage?.w ?? m.imageNaturalWidth;
+    const naturalH = naturalFromImage?.h ?? m.imageNaturalHeight;
+    return computeMobileHeroMediaLayout(
+      window.innerWidth,
+      measureSvhPx(),
+      naturalW,
+      naturalH,
+      m.carBbox,
+    );
+  }, [framing, isMobileHero, loadedNatural, mobileViewportTick, selected]);
 
   useLayoutEffect(() => {
     let loadCleanup: (() => void) | undefined;
 
-    const update = () => {
-      loadCleanup?.();
-      loadCleanup = undefined;
+    const syncViewport = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobileHero(mobile);
+      if (mobile) setMobileViewportTick((t) => t + 1);
+    };
 
-      if (window.innerWidth >= 768 || !framing) {
-        setMobileLayout(null);
-        document.documentElement.style.removeProperty("--hero-mobile-media-h");
-        return;
-      }
+    syncViewport();
+    window.addEventListener("resize", syncViewport);
 
-      const section = sectionRef.current;
-      const natural = section ? readMobileHeroImageNatural(section) : null;
-      const naturalW = natural?.width ?? framing.imageNaturalWidth;
-      const naturalH = natural?.height ?? framing.imageNaturalHeight;
-      applyMobileLayout(framing, naturalW, naturalH);
+    if (window.innerWidth >= 768 || !current) {
+      document.documentElement.style.removeProperty("--hero-mobile-media-h");
+      return () => undefined;
+    }
 
-      if (!natural && section) {
-        const img = section.querySelector(
-          '[data-hero-layout="mobile"] [data-testid="hero-slide-image"]',
-        ) as HTMLImageElement | null;
-        if (img && !img.complete) {
-          const onLoad = () => {
-            const n = readMobileHeroImageNatural(section);
-            if (n && framing) applyMobileLayout(framing, n.width, n.height);
-          };
+    const section = sectionRef.current;
+    const natural = section ? readMobileHeroImageNatural(section) : null;
+    const fr = getHeroSlideFraming(current);
+    const matches = (w: number, h: number) =>
+      Math.abs(w - fr.mobileHero.imageNaturalWidth) /
+        fr.mobileHero.imageNaturalWidth <
+        0.04 &&
+      Math.abs(h - fr.mobileHero.imageNaturalHeight) /
+        fr.mobileHero.imageNaturalHeight <
+        0.04;
+
+    if (natural && matches(natural.width, natural.height)) {
+      setLoadedNatural({
+        slide: selected,
+        w: natural.width,
+        h: natural.height,
+      });
+    } else if (section) {
+      const img = section.querySelector(
+        '[data-hero-layout="mobile"] [data-testid="hero-slide-image"]',
+      ) as HTMLImageElement | null;
+      const onLoad = () => {
+        const n = readMobileHeroImageNatural(section);
+        if (
+          n &&
+          section.getAttribute("data-active-index") === String(selected) &&
+          matches(n.width, n.height)
+        ) {
+          setLoadedNatural({ slide: selected, w: n.width, h: n.height });
+        }
+      };
+      if (img) {
+        if (img.complete && img.naturalWidth > 0) {
+          onLoad();
+        } else {
           img.addEventListener("load", onLoad, { once: true });
           loadCleanup = () => img.removeEventListener("load", onLoad);
         }
       }
-    };
+    }
 
-    update();
-    window.addEventListener("resize", update);
     return () => {
-      window.removeEventListener("resize", update);
+      window.removeEventListener("resize", syncViewport);
       loadCleanup?.();
     };
-  }, [selected, framing, applyMobileLayout]);
+  }, [selected, current]);
+
+  useEffect(() => {
+    if (!mobileLayout) {
+      document.documentElement.style.removeProperty("--hero-mobile-media-h");
+      return;
+    }
+    document.documentElement.style.setProperty(
+      "--hero-mobile-media-h",
+      `${mobileLayout.mediaHeightPx}px`,
+    );
+  }, [mobileLayout]);
 
   const openSlide = useCallback(
     (v: Veiculo) => {
@@ -207,15 +246,21 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
       className="relative -mt-[var(--header-offset,7.5rem)] flex h-[100svh] min-h-[560px] w-full flex-col overflow-hidden bg-[#0a1628]"
       data-testid="hero-carousel"
       data-active-index={selected}
-      data-mobile-media-height={mobileLayout?.mediaHeightPx}
+      data-mobile-media-height={mobileLayout?.mediaHeightPx ?? undefined}
       aria-roledescription="carrossel"
     >
       <div
-        className="relative shrink-0 sm:absolute sm:inset-0 sm:shrink"
+        className={cn(
+          "relative shrink-0 sm:absolute sm:inset-0 sm:shrink",
+          isMobileHero && mobileLayout && "overflow-hidden",
+        )}
         style={
-          mobileLayout
+          isMobileHero && mobileLayout
             ? { height: `${mobileLayout.mediaHeightPx}px` }
             : undefined
+        }
+        data-mobile-media-height={
+          isMobileHero ? mobileLayout?.mediaHeightPx : undefined
         }
       >
         <AnimatePresence mode="sync" initial={false}>
@@ -233,14 +278,16 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
                 }}
               >
                 <HeroFullBleedSlide
-                  src={heroSlideImagePath(v, getHeroSlideFraming(v))}
+                  desktopSrc={heroSlideImagePath(v, getHeroSlideFraming(v))}
+                  mobileSrc={heroSlideMobileImagePath(v, getHeroSlideFraming(v))}
                   alt={`${v.marca} ${v.modelo}`}
                   sizes="100vw"
                   priority={v.id === vehicles[0]?.id}
                   framing={getHeroSlideFraming(v)}
                   kenBurns={enableKenBurns}
-                  mobileMediaHeightPx={mobileLayout?.mediaHeightPx}
+                  mobileHeightFromParent={isMobileHero}
                   mobileObjectPosition={mobileLayout?.objectPosition}
+                  mobileLongFade={mobileLayout?.longFade}
                 />
               </motion.div>
             ) : null,
@@ -258,7 +305,7 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
       </div>
 
       <div
-        className="relative z-10 flex min-h-0 flex-1 flex-col justify-center px-4 py-2 sm:mt-auto sm:flex-none sm:justify-end sm:px-8 sm:pb-20 sm:pt-24"
+        className="relative z-10 flex min-h-0 flex-1 flex-col justify-end px-4 py-2 max-sm:-mt-14 max-sm:bg-gradient-to-t max-sm:from-[#0a1628] max-sm:from-50% max-sm:via-[#0a1628]/90 max-sm:to-transparent max-sm:pb-1 max-sm:pt-10 sm:mt-auto sm:flex-none sm:px-8 sm:pb-20 sm:pt-24"
         data-testid="hero-slide-copy"
       >
         <div
@@ -340,9 +387,9 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
 
       <div
         data-testid="hero-mobile-footer"
-        className="relative z-20 mt-auto shrink-0 px-3 pb-5 sm:absolute sm:bottom-6 sm:left-1/2 sm:mt-0 sm:-translate-x-1/2 sm:translate-y-12 sm:px-0 sm:pb-0"
+        className="relative z-20 mt-auto shrink-0 px-3 pb-4 pt-1 sm:absolute sm:bottom-6 sm:left-1/2 sm:mt-0 sm:-translate-x-1/2 sm:translate-y-12 sm:px-0 sm:pb-0 sm:pt-0"
       >
-        <div className="grid w-full max-w-md grid-cols-[auto_1fr_auto] items-center gap-2 sm:flex sm:justify-center">
+        <div className="grid w-full max-w-md grid-cols-[auto_1fr_auto] items-center gap-1 sm:flex sm:justify-center">
           <Button
             type="button"
             variant="secondary"
@@ -354,25 +401,6 @@ export function HeroCarousel({ vehicles }: HeroCarouselProps) {
           >
             {paused ? <Play className="size-5" /> : <Pause className="size-5" />}
           </Button>
-
-          <motion.button
-            type="button"
-            className="col-span-3 flex flex-col items-center gap-1 text-white/80 transition-colors duration-200 hover:text-white sm:col-span-1 sm:hidden"
-            aria-label="Rolar para o conteúdo"
-            onClick={() => {
-              document.getElementById("busca-veiculo")?.scrollIntoView({
-                behavior: reduceMotion ? "auto" : "smooth",
-              });
-            }}
-            animate={reduceMotion ? undefined : { y: [0, 6, 0] }}
-            transition={
-              reduceMotion
-                ? undefined
-                : { duration: 2.2, repeat: Infinity, ease: "easeInOut" }
-            }
-          >
-            <ArrowDown className="size-5" aria-hidden />
-          </motion.button>
 
           <div className="col-start-2 flex justify-center gap-0.5">
             {vehicles.map((v, i) => (

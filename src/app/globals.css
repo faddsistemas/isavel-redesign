@@ -250,6 +250,27 @@
   );
 }
 
+.hero-photo-pane-mobile--long-fade {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 32%,
+    rgb(0 0 0 / 0.82) 58%,
+    rgb(0 0 0 / 0.45) 78%,
+    rgb(0 0 0 / 0.12) 92%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0%,
+    black 32%,
+    rgb(0 0 0 / 0.82) 58%,
+    rgb(0 0 0 / 0.45) 78%,
+    rgb(0 0 0 / 0.12) 92%,
+    transparent 100%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-ken-burns-contain,
   .hero-ken-burns-cover,

@@ -7,13 +7,15 @@ import {
 import { bboxFocalPosition } from "@/lib/hero-slide-framing";
 
 const BBOX_VW = 0.96;
-const MAX_MEDIA_SVH = 58;
+const MAX_MEDIA_SVH = 62;
+const LONG_FADE_SVH = 50;
 
 export interface MobileHeroMediaLayout {
   mediaHeightPx: number;
   objectPosition: string;
   /** Teto rígido (boxH máximo com cover sem cortar largura do bbox). */
   ceilingHeightPx: number;
+  longFade: boolean;
 }
 
 /** Cover: s = max(boxW/imgW, boxH/imgH). Com regime altura, s*bboxW_px <= boxW*0.96 ⇒ boxH <= imgH*(boxW*0.96)/bboxW_px. */
@@ -67,10 +69,12 @@ export function computeMobileHeroMediaLayout(
   );
   const capSvh = (MAX_MEDIA_SVH / 100) * svhPx;
   const mediaHeightPx = Math.min(ceilingHeightPx, capSvh);
+  const longFade = mediaHeightPx < (LONG_FADE_SVH / 100) * svhPx - 2;
 
   return {
     mediaHeightPx: Math.round(mediaHeightPx),
     objectPosition,
     ceilingHeightPx,
+    longFade,
   };
 }

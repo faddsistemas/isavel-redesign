@@ -159,7 +159,12 @@ test.describe("Isavel redesign smoke", () => {
         await expect(carousel).toHaveAttribute("data-active-index", String(i), {
           timeout: 5_000,
         });
-        await page.waitForTimeout(1_300);
+        if (isMobile) {
+          await expect(carousel).toHaveAttribute("data-mobile-media-height", /^\d+$/, {
+            timeout: 5_000,
+          });
+        }
+        await page.waitForTimeout(800);
       }
 
       const metrics = await page.evaluate(
@@ -219,7 +224,9 @@ test.describe("Isavel redesign smoke", () => {
           ) as HTMLElement | null;
           if (!media || !layoutEl || !img || !copy) return null;
 
-          const dataset = media.getAttribute("data-hero-framing");
+          const dataset =
+            layoutEl.getAttribute("data-hero-framing") ??
+            media.getAttribute("data-hero-framing");
           if (!dataset) return null;
           const [aspectStr, bboxStr, desktopPos, mobilePos] = dataset.split("|");
           const fallbackAspect = Number.parseFloat(aspectStr);
@@ -300,9 +307,36 @@ test.describe("Isavel redesign smoke", () => {
             const ceiling =
               (naturalH * (container.width * 0.96)) / bboxW_px;
             const svhCap =
-              (58 / 100) * section.getBoundingClientRect().height;
+              (62 / 100) * section.getBoundingClientRect().height;
             const allowed = Math.min(ceiling, svhCap) + 4;
             withinCeiling = container.height <= allowed;
+          }
+
+          const svhHeight = section.getBoundingClientRect().height;
+          const minMediaWhenPossible =
+            layoutName === "mobile" && naturalW > 0 && naturalH > 0
+              ? (() => {
+                  const bboxW_px = (br - bl) * naturalW;
+                  const ceilingPx =
+                    (naturalH * (container.width * 0.96)) / bboxW_px;
+                  const target = svhHeight * 0.5;
+                  return ceilingPx >= target - 2
+                    ? container.height >= target - 6
+                    : true;
+                })()
+              : true;
+
+          let ctaFooterGap: number | null = null;
+          if (layoutName === "mobile") {
+            const footer = section.querySelector(
+              '[data-testid="hero-mobile-footer"]',
+            ) as HTMLElement | null;
+            const ctaRow = copy.querySelector(
+              '[data-testid="hero-slide-open"]',
+            ) as HTMLElement | null;
+            if (footer && ctaRow) {
+              ctaFooterGap = footer.getBoundingClientRect().top - ctaRow.getBoundingClientRect().bottom;
+            }
           }
 
           return {
@@ -321,6 +355,8 @@ test.describe("Isavel redesign smoke", () => {
             naturalLoaded: naturalW > 0,
             kenBurns,
             withinCeiling,
+            minMediaWhenPossible,
+            ctaFooterGap,
             mediaHeight: container.height,
           };
         },
@@ -338,9 +374,19 @@ test.describe("Isavel redesign smoke", () => {
         expect(metrics!.kenBurns, `slide ${i} ken burns off`).toBe(false);
         expect(metrics!.withinCeiling, `slide ${i} media height`).toBe(true);
         expect(
+          metrics!.minMediaWhenPossible,
+          `slide ${i} mídia ≥50svh quando teto permite`,
+        ).toBe(true);
+        expect(
           metrics!.carFillVw,
           `slide ${i} car width ≤ bbox na imagem`,
         ).toBeLessThanOrEqual(0.97);
+        if (metrics!.ctaFooterGap != null) {
+          expect(
+            metrics!.ctaFooterGap,
+            `slide ${i} gap CTA–rodapé`,
+          ).toBeLessThanOrEqual(72);
+        }
       }
       expect(metrics!.overlapText, `slide ${i}`).toBe(false);
     }
